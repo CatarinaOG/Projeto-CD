@@ -6,7 +6,7 @@ a88276 Diogo Viana Ramos Casal Novo
  Luis Francisco Ferreira Faria
 
 Módulo 2:
-a93259 Ana Catarina Olivgeira Gonçalves
+a93259 Ana Catarina Oliveira Gonçalves
 a83919 Mafalda Colaco Parente Morais da Costa
 
 Módulo 3:
