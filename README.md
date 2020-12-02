@@ -17,5 +17,5 @@ Módulo 4:
 a93288 Gabriela Moreira Prata
 a93315 Alexandre Silva Martins
 
-## Descrisão
+## Descrição
 Perante um ficheiro de entrada gera um ficheiro comprimido por codificação Shannon-Fano
