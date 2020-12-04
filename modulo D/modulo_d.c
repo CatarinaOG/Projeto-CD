@@ -1,23 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define PATH_MAX_SIZE 1024
 
 //Remove n chars do path
 //Exemplo: Se tivermos como inputs path = "aaa.txt.rle" e n = 4, temos como resultado path = "aaa.txt" 
 //Return 1 caso seja bem sucedido, se o return for 0 enta mt provavelmente o path não está corretamente formatado
-int removeCharsFromPath (char *path, int n){
-    int i, r = 1, aux = i - n;
+void removeCharsFromPath (char *path, char *path_new, int n){
+    int i;
     for(i = 0;path[i] != '\0';i++);
-    if(aux < 0) r = 0;
-    else path[i-n] = '\0';
-    return r;
+    strncpy(path_new,path,i-n);
+}
+
+//função que imprime valores de rle repetidos
+void print(char *path, char valor_rle, int n_rep){
+    FILE *fl = fopen(path,"w");    //lê desde o inicio, acrescenta só no fim
+    for(int i = 0;i < n_rep; i++)
+        fprintf(fl,"%c",valor_rle); //(ASCII->Valor) 
+    fclose(fl);
 }
 
 //
 void decompressRLE(char *path){
     FILE *fp_rle;
-    char ch, str[2], *path_new;
+    char ch, str[2], path_new[PATH_MAX_SIZE];
     fp_rle = fopen(path,"r");
-    removeCharsFromPath(path_new,4);
+    removeCharsFromPath(path,path_new,4);
     while((ch = fgetc(fp_rle)) != EOF){
         if(ch != '\0'){
             fgets(str,2,fp_rle);
@@ -25,4 +34,11 @@ void decompressRLE(char *path){
         }
         else print(path_new,ch,1);
     }
+    fclose(fp_rle);
+}
+
+int main(){
+    char path[] = "aaa.txt.rle";
+    decompressRLE(path);
+    return 0;
 }
