@@ -14,27 +14,27 @@ void removeCharsFromPath (char *path, char *path_new, int n){
 }
 
 //função que imprime valores de rle repetidos
-void print(char *path, char valor_rle, int n_rep){
-    FILE *fl = fopen(path,"w");    //lê desde o inicio, acrescenta só no fim
+void print(FILE *fp, char valor_rle, int n_rep){
     for(int i = 0;i < n_rep; i++)
-        fprintf(fl,"%c",valor_rle); //(ASCII->Valor) 
-    fclose(fl);
+        fprintf(fp,"%c",valor_rle); //(ASCII->Valor) 
 }
 
 //
 void decompressRLE(char *path){
-    FILE *fp_rle;
+    FILE *fp_rle, *fp_new;
     char ch, str[2], path_new[PATH_MAX_SIZE];
-    fp_rle = fopen(path,"r");
     removeCharsFromPath(path,path_new,4);
+    fp_rle = fopen(path,"r");
+    fp_new = fopen(path_new,"a+");    //lê desde o inicio, acrescenta só no fim
     while((ch = fgetc(fp_rle)) != EOF){
-        if(ch != '\0'){
+        if(ch == '\0'){
             fgets(str,2,fp_rle);
-            print(path_new,str[1],(int) str[2]);
+            print(fp_new,str[1],(int)str[2]);
         }
-        else print(path_new,ch,1);
+        else fputc(ch,fp_new);
     }
     fclose(fp_rle);
+    fclose(fp_new);
 }
 
 int main(){
