@@ -3,7 +3,7 @@
 ## Autores
 Módulo 1:
 a88276 Diogo Viana Ramos Casal Novo
- Luis Francisco Ferreira Faria
+a93209 Luis Francisco Ferreira Faria
 
 Módulo 2:
 a93259 Ana Catarina Oliveira Gonçalves
