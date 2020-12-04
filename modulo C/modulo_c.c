@@ -4,8 +4,8 @@
 
 int read(char* path,int* tblocos[],char** codes[]){
 	FILE *fp;
-	char a[64];
-	unsigned int nblocos = 0,n;
+	char a[64],code;
+	unsigned int nblocos = 0,n,tcode;
 
 	fp = fopen(path,"r");
 	if (!fp) return -1;
@@ -24,7 +24,7 @@ int read(char* path,int* tblocos[],char** codes[]){
 	*codes = malloc(sizeof(char*)*nblocos*256);
 	for(int i = 0;i<nblocos;i++){
 		n = 0;
-		a[n] = fgetc(fp);
+		a[0] = fgetc(fp);
 		while (a[n] != '@'){
 			n++;
 			a[n] = fgetc(fp);
@@ -34,16 +34,21 @@ int read(char* path,int* tblocos[],char** codes[]){
 		//printf("%s\n",a);
 		(*tblocos)[i] = n;
 		//printf("%d\n",i);
+		//codes[x][0] = tamanho do ultimo simbolo;codes[x][y] simbolo 
 		for(int j = 0;j<256;j++){
-			n = 0;
-			a[n] = fgetc(fp);
-			while(a[n] != ';' && a[n] != '@'){
-				n++;
-				a[n] = fgetc(fp);
+			tcode = 1;
+			code = fgetc(fp);
+			a[1] = 0; 
+ 			for(n = 0;code != ';' && code != '@';n++){
+ 				if(n == 8){n = 0;a[++tcode] = 0;}
+ 				a[tcode] = code - '0' + (a[tcode] << 1);
+ 				code = fgetc(fp);
 			}
-			a[n] = '\0';
+			if(n != 0) tcode++;
+			a[tcode] = '\0';
+			a[0] = n;
 			//printf("%s\n",a);
-			(*codes)[i*256+j] = malloc(sizeof(char)*n);
+			(*codes)[i*256+j] = malloc(sizeof(char)*tcode);
 			strcpy((*codes)[i*256+j],a);
 
 		}
@@ -66,8 +71,11 @@ int main(){
 	putc('\n',stdout);
 
 	for(int i = 0;i<n1;i++){
-		for (int j = 0;j<256;j++){
-			printf("%s\n",c[i*256+j]);
+		for(int j = 0;j<256;j++){
+			for(int k = 0;c[i*256+j][k] != '\0';k++){
+				printf("%d ",c[i*256+j][k]);	
+			}
+			putc('\n',stdout);
 		}
 		putc('\n',stdout);
 	}
