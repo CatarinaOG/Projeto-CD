@@ -88,13 +88,61 @@ int makeTable(unsigned char* table,unsigned char* codes[],int tam){
 	return 1;
 }
 
-int main(){
-	int n1,*n = NULL;
-	unsigned char **c = NULL,table[256*6*8];
+int encode(char* path,char* pathcod){
+	printf("ola");
+	unsigned char **codes = NULL,*line,off,c,*name;
+	int *tblocos = NULL,nblocos,tam,i,n;
+	FILE *fp,*out;
+	for(i = 0;path[i] != '\0';i++);
+	printf("%d\n",i);
+	name = malloc(sizeof(char)*500);
+	if (!name) return -1;
+	strcpy(name,path);
+	strcpy(name+i,".shaf");
 
-	n1 = read("aaa.txt.cod",&n,&c);;
-	makeTable(table,c,4);
+	printf("%s\n",name);
+	
+	fp = fopen(path,"r");
+	out = fopen(name,"w");
+	if (!fp) return -1;
+	if (!out) return -1;
+	fprintf(out,"@%d@",nblocos);
 
+	nblocos = read(pathcod,&tblocos,&codes);
+	unsigned char res[tblocos[nblocos*2]],*table = NULL;
+
+	for(int i = 0;i < nblocos;i++){
+		tam = tblocos[i*2+1] + 2;
+		table = malloc(sizeof(unsigned char) * tam);
+		makeTable(table,codes,tam);
+
+		off = 0;
+		n = 0;
+		for(int j = 0;j < tblocos[nblocos*2]; j++){
+			c = fgetc(fp);
+			line = table+(off*256*tam+c*tam);
+			off = line[0];
+			res[n] += line[1];
+			for(int k = 2;k < tam && line[k] != 0;k++)
+				res[++n] = line[k];
+			if (off == 0) n++;
+		}
+		fprintf(out,"%d@",n);
+		for(int i = 0;i < n; i++) fputc(res[i],out);
+		fputc('@',out);
+		free(table);
+	}
+	fputc('0',out);
+	return 1;
+}
+
+int main(){/*
+	int n1,*n = NULL,tam = 1;
+	unsigned char **c = NULL,table[256*(tam+2)*8];
+
+	n1 = read("aaa.txt.cod",&n,&c);
+	makeTable(table,c,tam);
+	tam += 2;
 	for (int i = 0;i < n1;i++){
 		printf("%d|",n[i]);
 	}
@@ -112,12 +160,13 @@ int main(){
 	for(int i = 0;i < 8;i++){
 		for(int j = 0;j < 256;j++){
 			printf("off-%d;letra-%5d -->",i,j);
-			for(int k = 0;k < 6;k++)
-				printf("%d ",table[i*256*6+j*6+k]);
+			for(int k = 0;k < tam;k++)
+				printf("%d ",table[i*256*tam+j*tam+k]);
 			printf("\n");
 		}
 	}
-
+	*/
+	encode("aaa.txt","aaa.txt.cod");
 
 	return 1;
 }
