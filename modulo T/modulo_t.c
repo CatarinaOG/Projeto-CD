@@ -1,9 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define MAX 100
-
-// Descobre o número blocos
-
 
 // Descobre se ocorreu RLE ou nao
 char ORIG_RLE (FILE *fp){
@@ -73,8 +69,10 @@ int main (){
     orig_rle = ORIG_RLE(fp); // Original ou RLE?
     nrBlocos = descobre_nr_blocos(fp); // Nr de blocos
 
+    //testes
     printf("rle: %c    nrblocos: %d \n",orig_rle, nrBlocos);
 
+    //vai correr todos os blocos, lendo, codificando e escrevendo cada bloco sequencialmente
     for (i=0 ; i<nrBlocos; i++){
         printf("Bloco%d:",i);
         converte1bloco(fp,nrBlocos,orig_rle);
