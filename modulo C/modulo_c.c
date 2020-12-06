@@ -95,13 +95,17 @@ int encode(char* path,char* pathcod){
 	FILE *fp,*out;
 	for(i = 0;path[i] != '\0';i++);
 	printf("%d\n",i);
-	name = malloc(sizeof(char)*500);
+	name = malloc(sizeof(char)*i+6);
 	if (!name) return -1;
-	strcpy(name,path);
-	strcpy(name+i,".shaf");
+	printf("%c\n", name[0]);
 
-	printf("%s\n",name);
 	
+	strcpy(name,path);
+	printf("%s\n",name );
+	strcpy(name+i,".shaf");
+	printf("%s\n",name );
+	// Bronze seu autista mete isto a funcionar, que tudo o que esta por cima ja esta bem
+	/*
 	fp = fopen(path,"r");
 	out = fopen(name,"w");
 	if (!fp) return -1;
@@ -134,6 +138,7 @@ int encode(char* path,char* pathcod){
 	}
 	fputc('0',out);
 	return 1;
+	*/
 }
 
 int main(){/*
