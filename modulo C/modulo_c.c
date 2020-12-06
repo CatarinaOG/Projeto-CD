@@ -97,7 +97,6 @@ int encode(char* path,char* pathcod){
 	printf("%d\n",i);
 	name = malloc(sizeof(char)*i+6);
 	if (!name) return -1;
-	printf("%c\n", name[0]);
 
 	
 	strcpy(name,path);
@@ -105,21 +104,22 @@ int encode(char* path,char* pathcod){
 	strcpy(name+i,".shaf");
 	printf("%s\n",name );
 	// Bronze seu autista mete isto a funcionar, que tudo o que esta por cima ja esta bem
-	/*
+	
 	fp = fopen(path,"r");
 	out = fopen(name,"w");
 	if (!fp) return -1;
 	if (!out) return -1;
+	
 	fprintf(out,"@%d@",nblocos);
 
 	nblocos = read(pathcod,&tblocos,&codes);
 	unsigned char res[tblocos[nblocos*2]],*table = NULL;
 
-	for(int i = 0;i < nblocos;i++){
+	for(i = 0;i < nblocos;i++){
 		tam = tblocos[i*2+1] + 2;
-		table = malloc(sizeof(unsigned char) * tam);
+		table = malloc(sizeof(unsigned char) * tam*256*2*8);
 		makeTable(table,codes,tam);
-
+		
 		off = 0;
 		n = 0;
 		for(int j = 0;j < tblocos[nblocos*2]; j++){
@@ -135,13 +135,14 @@ int encode(char* path,char* pathcod){
 		for(int i = 0;i < n; i++) fputc(res[i],out);
 		fputc('@',out);
 		free(table);
+
 	}
 	fputc('0',out);
 	return 1;
-	*/
+	
 }
 
-int main(){/*
+int main(){
 	int n1,*n = NULL,tam = 1;
 	unsigned char **c = NULL,table[256*(tam+2)*8];
 
@@ -170,7 +171,7 @@ int main(){/*
 			printf("\n");
 		}
 	}
-	*/
+	
 	encode("aaa.txt","aaa.txt.cod");
 
 	return 1;
