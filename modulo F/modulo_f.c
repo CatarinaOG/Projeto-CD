@@ -4,24 +4,31 @@
 
 
 // d?0 se a compressao for >5% e 1 se for <5%  (falta testar)
-int checkCompression (char* str1, char* str2){
-
-    float comp, i = strlen(str1), f = strlen(str2);
-    int r = 1, ; 
-    comp = (i-f)/i;
-    if (comp > 0.05) r = 0;
-    return r;
+int checkCompression (FILE *f_origin, FILE *f_rle){
+	int i,n;
+	FILE *fp1, *fp2;
+	fp1 = f_origin;
+	fp2 = f_rle;
+	*fp1 = fopen(file_name, "r");
+	*fp2 = fopen(file_name, "r");
+	fseek(fp1, 0, SEEK_END);
+	fseek(fp2, 0, SEEK_END);
+	i = ftell(fp1);
+	n = ftell(fp2);
+ 	return n/i;
 }
 
 int charLeft(int n,char *f_origin){
 	int i;
 	FILE *fp;
-	fp = f_origin
-	fseek()
-
+	fp = f_origin;
+	*fp = fopen(file_name, "r");
+	fseek(fp, 0, SEEK_END);
+	i = ftell(fp);
+ 	return i-n;
 }
 
-void firstBlockCompression(f_origin, f_rle){
+void firstBlockCompression(FILE *f_origin, FILE *f_rle){
 
 }
 
@@ -29,8 +36,8 @@ void firstBlockCompression(f_origin, f_rle){
 //65536+1024 = 66560 
 void RLEcompression(*f_origin, *f_rle){
 	int k;
-	int p=0;
-	int block=1;
+	int p=0;//
+	int block=1;//
 	int rep=0;
 	char repc;
 	FILE *fp_origin;
@@ -49,8 +56,9 @@ void RLEcompression(*f_origin, *f_rle){
 
 		if( k>66560 ){
 			fgets( blockBuffer, 65536, fp_origin);
+
 			while(blockBuffer){
-				fg
+				
 			}
 
 
@@ -71,6 +79,7 @@ void RLEcompression(*f_origin, *f_rle){
 
 
 }
+
 
 
 
