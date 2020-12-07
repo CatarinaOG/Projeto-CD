@@ -204,6 +204,39 @@ void quickSort(int *tam, char *chars, char **codes, int low, int high){
     }
 }
 
+
+void auxDecompressSF(unsigned char *buffer_shaf, char *buffer_new, char *chars, char **codes, int nr_codes, int *tam_buffer_new){
+    char str[256];
+    int i  , _bn = 0; //_bn = indice buffer_new    _bs = indice buffer_shaf
+    int shifts=0, _bs=0, prox_index=0;
+    unsigned char aux= buffer_shaf[0];
+    while(_bn < *tam_buffer_new){
+        if(shifts==7){
+            shifts=0;
+            _bs++;
+            aux= buffer_shaf[_bs];
+        }
+
+        addBit(str,&aux,_bs,&shifts,&prox_index);
+        for(i=0; i<nr_codes && strcmp(str,codes[i]) ; i++);
+        if(i<nr_codes){
+            buffer_new[_bn] = chars[i];
+            _bn++;
+            prox_index =0;
+        }
+    }
+}
+
+//adiciona um bit 
+void addBit( char *str,unsigned char *aux,int *shifts, int *prox_index){
+    if(*aux< 128) str[prox_index] = '0';
+    else str[prox_index] ='1';
+    str[prox_index+1] ='\0';
+    *prox_index++;
+    *aux << 1;
+    *shifts++;
+}
+
 //Faz descompressao SF (cria ficheiro do tipo .rle ou original)
 void decompressSF(char *path_cod, char *path_shaf){
     char path_new[PATH_MAX_SIZE];
@@ -230,6 +263,9 @@ void decompressSF(char *path_cod, char *path_shaf){
         free(buffer_shaf);
         nr_codes = 0;
     }
+    fclose(fp_shaf); 
+    fclose(fp_cod); 
+    fclose(fp_new); 
 }
 
 int main() {
