@@ -18,6 +18,8 @@ int checkCompression (FILE *f_origin, FILE *f_rle){
  	return n/i;
 }
 
+
+
 int charLeft(int n,char *f_origin){
 	int i;
 	FILE *fp;
@@ -28,55 +30,145 @@ int charLeft(int n,char *f_origin){
  	return i-n;
 }
 
-void firstBlockCompression(FILE *f_origin, FILE *f_rle){
 
+
+void firstBlockCompression(FILE *f_origin, FILE *f_rle){
+	int k = charLeft(0, f_origin);
+	int p = 1;
+	int rep=1;
+
+	char repch;
+	char blockBuffer[66560];
+
+	FILE *fp_origin, *fp_rle;
+	fp_origin = fopen(f_origin, 'r');
+	fp_rle = fopen(f_rle, 'a');
+
+	if( k>66560 ){
+		fgets( blockBuffer, 65536, fp_origin);
+		//c = (block-1)*65536 + p;
+		repch = blockBuffer[0];
+
+		while(blockBuffer){
+
+			if(blockBuffer[p]==repch && rep < 255) rep++;
+			else {
+				if(rep>=4) {
+					print(fp_rle, char 'rep');
+					repch=blockBuffer[p];
+					rep=1;
+				}
+				else{
+					while(rep!=0) print(fp_rle, char 'rep');
+					repch=blockBuffer[p];
+					rep=1;
+				}
+			};
+			p++;
+		}
+	}
+	else{
+		fgets( blockBuffer, 66560, fp_origin);
+		fgets( blockBuffer, 65536, fp_origin);
+		//c = (block-1)*65536 + p;
+		repch = blockBuffer[0];
+
+		while(blockBuffer){
+
+			if(blockBuffer[p]==repch && rep < 255) rep++;
+			else {
+				if(rep>=4) {
+					print(fp_rle, char 'rep');
+					repch=blockBuffer[p];
+					rep=1;
+				}
+				else{
+					while(rep!=0) print(fp_rle, char 'rep');
+					repch=blockBuffer[p];
+					rep=1;
+				}
+			};
+			p++;
+		}	
+	}
+	fclose(f_origin);
+	fclose(f_rle);
 }
+
+
 
 //64*1024 = 65536
 //65536+1024 = 66560 
 void RLEcompression(*f_origin, *f_rle){
-	int k;
-	int p=0;//
+	int k= charLeft(0, f_origin);
+	int p = 1;
+	int rep = 1;
 	int block=1;//
-	int rep=0;
-	char repc;
-	FILE *fp_origin;
-	fp_origin = f_origin;
 
+	char repch;
 	char blockBuffer[66560];
 
-	fopen(f_origin,'r');
-	fopen(f_rle,'a');
+	FILE *fp_origin, *fp_rle;
+	fp_origin = fopen(f_origin, 'r');
+	fp_rle = fopen(f_rle, 'a');
 
-	if (firstBlockCompression(f_origin, f_rle)!) break;
 
-	while (feof(f_origin)!){
+	while (feof(fp_origin)!){
 
-		k= charLeft(p, fp_origin);
+		k -= (block-1)*65536;
 
-		if( k>66560 ){
-			fgets( blockBuffer, 65536, fp_origin);
+			if( k>66560 ){
+				fgets( blockBuffer, 65536, fp_origin);
+				//c = (block-1)*65536 + p;
+				repch = blockBuffer[0];
 
-			while(blockBuffer){
-				
+				while(blockBuffer){
+
+					if(blockBuffer[p]==repch && rep < 255) rep++;
+					else {
+						if(rep>=4) {
+							print(fp_rle, char 'rep');
+							repch=blockBuffer[p];
+							rep=1;
+						}
+						else{
+							while(rep!=0) print(fp_rle, char 'rep');
+							repch=blockBuffer[p];
+							rep=1;
+						}
+					};
+					p++;
+				}
 			}
+			else{
+				fgets( blockBuffer, 66560, fp_origin);
+				fgets( blockBuffer, 65536, fp_origin);
+				//c = (block-1)*65536 + p;
+				repch = blockBuffer[0];
 
+				while(blockBuffer){
 
-			p = block*65536;
-			freqFile(f_rle);
-		}
-		else{
-			fgets( blockBuffer, 66560, fp_origin);
-
-
-
-			freqFile(f_rle);
-		}
-	block++;
+					if(blockBuffer[p]==repch && rep < 255) rep++;
+					else {
+						if(rep>=4) {
+							print(fp_rle, char 'rep');
+							repch=blockBuffer[p];
+							rep=1;
+						}
+						else{
+							while(rep!=0) print(fp_rle, char 'rep');
+							repch=blockBuffer[p];
+							rep=1;
+						}
+					}
+				p++;
+				}	
+			}
+	p=1;
+	block++;	
 	}
 	fclose(f_origin);
 	fclose(f_rle);
-
 
 }
 
