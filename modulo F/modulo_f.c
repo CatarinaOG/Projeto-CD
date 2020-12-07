@@ -3,8 +3,9 @@
 #include <string.h>
 
 
-// dá 0 se a compressao for >5% e 1 se for <5%  (falta testar)
+// d?0 se a compressao for >5% e 1 se for <5%  (falta testar)
 int checkCompression (char* str1, char* str2){
+
     float comp, i = strlen(str1), f = strlen(str2);
     int r = 1, ; 
     comp = (i-f)/i;
@@ -12,27 +13,30 @@ int checkCompression (char* str1, char* str2){
     return r;
 }
 
-
-
-int charLeft(n, *fp_origin){
+int charLeft(int n,char *f_origin){
+	int i;
+	FILE *fp;
+	fp = f_origin
+	fseek()
 
 }
 
 void firstBlockCompression(f_origin, f_rle){
-	int n =0;
-	while(feof!){
-		
-	}
+
 }
 
 //64*1024 = 65536
 //65536+1024 = 66560 
 void RLEcompression(*f_origin, *f_rle){
-	int n;
 	int k;
+	int p=0;
 	int block=1;
 	int rep=0;
 	char repc;
+	FILE *fp_origin;
+	fp_origin = f_origin;
+
+	char blockBuffer[66560];
 
 	fopen(f_origin,'r');
 	fopen(f_rle,'a');
@@ -41,19 +45,30 @@ void RLEcompression(*f_origin, *f_rle){
 
 	while (feof(f_origin)!){
 
-		if(charLeft(n, fp_origin)>66560){
-			n=0;
-			while(feof(f_origin)! && n<65536) {
+		k= charLeft(p, fp_origin);
 
-				n++;
+		if( k>66560 ){
+			fgets( blockBuffer, 65536, fp_origin);
+			while(blockBuffer){
+				fg
 			}
 
+
+			p = block*65536;
+			freqFile(f_rle);
 		}
 		else{
+			fgets( blockBuffer, 66560, fp_origin);
 
+
+
+			freqFile(f_rle);
 		}
 	block++;
 	}
+	fclose(f_origin);
+	fclose(f_rle);
+
 
 }
 
@@ -63,18 +78,18 @@ void RLEcompression(*f_origin, *f_rle){
 
 
 // 64*1024=65536
-// tive a ver como é que podera ser melhor estruturar o trabalho
-// tenta ver se entendes a logica e se é possivel fazer assim
+// tive a ver como ?que podera ser melhor estruturar o trabalho
+// tenta ver se entendes a logica e se ?possivel fazer assim
 // alterei a base da RLEcompression para adaptar ao restante da main... diz-me se consegues adaptar para isto
-// esta função recebe um ficheiro original e uma lista para se preencher com frequencias
+// esta fun?o recebe um ficheiro original e uma lista para se preencher com frequencias
 // devolve o apontador para o ficheiro RLE ou NULL (o nome do ficheiro tem de ser fornecido)
 // (o ficheiro tem de estar no inicio quando for devolvido -> rewind)
-// maybe poderá trabalhar com strings... nao sei o que estas a pensar fazer
+// maybe poder?trabalhar com strings... nao sei o que estas a pensar fazer
 // por agora limita o tamanho a 64KB para facilitar e porque deve ser facil acrescentar esse tipo de coisas
-// provavelmente ainda falta coisas em todas as funções, e o que está deverá ser alterado
-// não esquecer que mais tarde temos de considerar outros valores para os blocos, e que a compressão pode ser forçada a acontecer
-// checkCompression ainda falta testar como tudo o resto mas devera não dar erro
-// fileFreq ainda não está feita
+// provavelmente ainda falta coisas em todas as fun?es, e o que est?dever?ser alterado
+// n? esquecer que mais tarde temos de considerar outros valores para os blocos, e que a compress? pode ser for?da a acontecer
+// checkCompression ainda falta testar como tudo o resto mas devera n? dar erro
+// fileFreq ainda n? est?feita
 // ja agora..... tens duas defenicoes da RLEcompression porque nao apaguei nada do que estava feito
 FILE* RLEcompression (FILE *fp_origin, int *arrayFreq, char *fileName){
 	
@@ -145,16 +160,16 @@ int main(int argc, char *argv[]){
 	    	fp_RLE = RLEcompression(fp_origin, arrayFreq, strcat(f,".rle"));
 			strcpy (f, argv[1]); // super importante pois a string f ficou danificada ao ser usada!!!!   ->    cenas.txt -> cenas.txt.rle
 	    	
-	    	// criar o ficheiro com as frequencias dos caracteres no ficheiro original (é realizado independentemente da situação)
+	    	// criar o ficheiro com as frequencias dos caracteres no ficheiro original (?realizado independentemente da situa?o)
 			fileFreq (arrayFreq, strcat(f,".freq"));
 	    	strcpy (f, argv[1]); // super importante pois a string f ficou danificada ao ser usada!!!!   ->    cenas.txt -> cenas.txt.freq
 	    	
 	    	
 	    	if (fp_RLE) {
-	    		// zerar o arrayFreq e preencher novamente com os valores correspondentes ao resultado da compressão RLE
+	    		// zerar o arrayFreq e preencher novamente com os valores correspondentes ao resultado da compress? RLE
 				memset (arrayFreq, 0, 255);
 				freqCounter (arrayFreq, fp_RLE);
-				// criar o ficheiro com as frequencias dos caracteres após a compressao RLE
+				// criar o ficheiro com as frequencias dos caracteres ap? a compressao RLE
 	    		fileFreq (arrayFreq, strcat(f,".rle.freq"));
 			}
 	    	
