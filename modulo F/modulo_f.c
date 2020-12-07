@@ -46,7 +46,6 @@ void firstBlockCompression(FILE *f_origin, FILE *f_rle){
 
 	if( k>66560 ){
 		fgets( blockBuffer, 65536, fp_origin);
-		//c = (block-1)*65536 + p;
 		repch = blockBuffer[0];
 
 		while(blockBuffer){
@@ -69,8 +68,6 @@ void firstBlockCompression(FILE *f_origin, FILE *f_rle){
 	}
 	else{
 		fgets( blockBuffer, 66560, fp_origin);
-		fgets( blockBuffer, 65536, fp_origin);
-		//c = (block-1)*65536 + p;
 		repch = blockBuffer[0];
 
 		while(blockBuffer){
@@ -119,7 +116,6 @@ void RLEcompression(*f_origin, *f_rle){
 
 			if( k>66560 ){
 				fgets( blockBuffer, 65536, fp_origin);
-				//c = (block-1)*65536 + p;
 				repch = blockBuffer[0];
 
 				while(blockBuffer){
@@ -142,8 +138,6 @@ void RLEcompression(*f_origin, *f_rle){
 			}
 			else{
 				fgets( blockBuffer, 66560, fp_origin);
-				fgets( blockBuffer, 65536, fp_origin);
-				//c = (block-1)*65536 + p;
 				repch = blockBuffer[0];
 
 				while(blockBuffer){
