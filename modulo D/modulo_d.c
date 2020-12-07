@@ -11,11 +11,13 @@ char checkRLE(FILE *fp){
     return (char) fgetc(fp);
 }
 
-//Descobre nº de blocos em que o ficheiro foi dividido
-int nrBlocos(FILE *fp){
+//Descobre nº de blocos em que o ficheiro original/rle foi dividido
+//E deixa o fp na posicao ler o tamanho do 1º bloco
+int nrBlocosCod(FILE *fp){
     int nr_blocos;
-    fseek(fp,3,SEEK_SET);
+    fseek(fp,1,SEEK_CUR); //Skip ao @ que segue <N|R>
     fscanf(fp,"%d",&nr_blocos);
+    fseek(fp,1,SEEK_CUR); //Skip ao @
     return nr_blocos;
 }
 
@@ -68,9 +70,15 @@ void mudaInputType(char *inputType){
     else (*inputType) = 'C';
 }
 
-//Retorna o fp com a posicao do tamanho do bloco pretendido
-//Se nr_bloco chegar ao valor 0 então encontra-se na posicao correta e dá return ao fp
-void pointerBloco(FILE *fp, int nr_bloco){
+void inicializa_arr(int **tam, char **chars, char ***codes, int N){
+    *tam    = (int *)   malloc(sizeof(int)*N);    //É suposto inicializar na funcao onde é criada(alterar para 16 caso consiga pôr o realloc a funcionar)
+    *chars  = (char *)  malloc(sizeof(char)*N);
+    *codes  = (char **) malloc(sizeof(char *)*N);
+}
+
+//Retorna o fp com a posicao do tamanho do bloco seguinte
+//
+void pointerBlocoCod(FILE *fp, int nr_bloco){
     char ch;
     int a;
     fseek(fp,3,SEEK_SET); //Dá skip a @<N|R>@
@@ -87,6 +95,19 @@ void pointerBloco(FILE *fp, int nr_bloco){
             }
         }
     }
+}
+
+void skipNrBlocosShaf(FILE *fp){
+    fseek(fp,1,SEEK_SET); //Skip ao @
+    int a;
+    fscanf(fp,"%d",&a);   //Skip ao nº de blocos
+    fseek(fp,1,SEEK_CUR); //Skip ao @
+    return;
+}
+
+void tamanhoBloco(FILE *fp, int *tam_bloco){
+    fscanf(fp,"%d",tam_bloco);
+    fseek(fp,1,SEEK_CUR); //Dá skip ao @, para que fique pronto a ler o bloco
 }
 
 //Analiza o bloco, obtendo os comprimentos das diferentes sequencias de bits(array "tam"), os chars correspondentes a cada uma (array "chars") 
@@ -152,6 +173,7 @@ void swap_char_pointers(char** a, char** b){
     *a = *b;
     *b = t;
 }
+
 // funçao auxiliar ao quicksort
 int partition (int *tam, char *chars, char **codes, int low, int high)
 {
@@ -184,46 +206,40 @@ void quickSort(int *tam, char *chars, char **codes, int low, int high){
 
 //Faz descompressao SF (cria ficheiro do tipo .rle ou original)
 void decompressSF(char *path_cod, char *path_shaf){
-    //FILE *fp_shaf = fopen(path_shaf,"r"), 
-    //     *fp_cod  = fopen(path_cod,"r"),
-    //     *fp_new;
-    //char check_RLE = checkRLE(fp_cod);
-    //int  nr_blocos = nrBlocos(fp_cod),
-    //     tam;
-    return;
-}
-
-void inicializa_arr(int **tam, char **chars, char ***codes, int N){
-    *tam    = (int *)   malloc(sizeof(int)*N);    //É suposto inicializar na funcao onde é criada(alterar para 16 caso consiga pôr o realloc a funcionar)
-    *chars  = (char *)  malloc(sizeof(char)*N);
-    *codes  = (char **) malloc(sizeof(char *)*N);
+    char path_new[PATH_MAX_SIZE];
+    removeCharsFromPath(path_shaf,path_new,4);
+    FILE *fp_shaf = fopen(path_shaf,"rb"), 
+         *fp_cod  = fopen(path_cod,"r"),
+         *fp_new  = fopen(path_new,"w");
+    unsigned char *buffer_shaf;
+    char **codes, *chars, *buffer_new, check_RLE = checkRLE(fp_cod);
+    int  *tam, i = 0, nr_codes = 0, nr_blocos = nrBlocosCod(fp_cod), tam_bloco_new, tam_bloco_shaf;
+    skipNrBlocosShaf(fp_shaf);
+    inicializa_arr(&tam, &chars, &codes,256);
+    while(i < nr_blocos){
+        tamanhoBloco(fp_cod,&tam_bloco_new);
+        buffer_new = (char *) malloc(sizeof(char)*tam_bloco_new);
+        tamanhoBloco(fp_shaf,&tam_bloco_shaf);
+        buffer_shaf = (unsigned char *) malloc(sizeof(unsigned char)*tam_bloco_shaf);
+        fread(buffer_shaf, sizeof(unsigned char), tam_bloco_shaf, fp_shaf); fseek(fp_shaf,1,SEEK_CUR); //Dá skip ao '@' para ficar a apontar para o tamanho do prox bloco(n deve haver problema com o EOF)
+        analizaBloco(fp_cod,tam,chars,codes,&nr_codes); //O fp tem que ficar a apontar para o tamanho do proximo bloco(cuidado quando alterar para ler com buffer)
+        quickSort(tam,chars,codes,0,nr_codes-1);
+        auxDecompressSF(buffer_shaf,buffer_new,chars,codes,nr_codes);
+        fwrite(buffer_new,sizeof(char),tam_bloco_new,fp_new);
+        free(buffer_new);
+        free(buffer_shaf);
+        nr_codes = 0;
+    }
 }
 
 int main() {
     clock_t tic = clock();
-    FILE *fp = fopen("aaa.txt.rle.cod","r");
-    pointerBloco(fp,1);
-    int a;
-    fscanf(fp,"%d",&a);
-    fseek(fp,1,SEEK_CUR);
-    int *tam; char **codes, *chars;
-    int nr_codes = 0;
-
-    inicializa_arr(&tam, &chars, &codes,256);
-
-    analizaBloco(fp,tam,chars,codes,&nr_codes);
-    for(int j = 0; j<nr_codes; j++){
-           printf("j = %03d /tam = %02d / str = %s / char = %c\n",j,tam[j],codes[j],chars[j]);
-        }
-
-    printf("\n\n");
-    quickSort(tam, chars,codes,0,nr_codes-1);
-
-    for(int j = 0; j<nr_codes; j++){
-        printf("j = %03d /tam = %02d / str = %s / char = %c\n",j,tam[j],codes[j],chars[j]);
-    }
-
-    fclose(fp);
+    //FILE *fp = fopen("aaa.txt.rle.cod","r");
+    //for(int j = 0; j<nr_codes; j++){
+    //       printf("j = %03d /tam = %02d / str = %s / char = %c\n",j,tam[j],codes[j],chars[j]);
+    //    }
+    //    fclose(fp);
+    decompressSF("aaa.txt.rle.cod","aaa.txt.rle.shaf");
     clock_t toc = clock();
     printf("Elapsed: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
     return 0;
