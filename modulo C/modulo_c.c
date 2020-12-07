@@ -117,7 +117,7 @@ int encode(char* path,char* pathcod){
 
 	for(i = 0;i < nblocos;i++){
 		tam = tblocos[i*2+1] + 2;
-		table = malloc(sizeof(unsigned char) * tam*256*2*8);
+		table = malloc(sizeof(unsigned char) * (tam+2)*256*8);
 		makeTable(table,codes,tam);
 		
 		off = 0;
