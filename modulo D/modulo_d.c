@@ -22,14 +22,19 @@ int nrBlocosCod(FILE *fp){
 }
 
 /*Remove n chars do path
-  Exemplo: Se tivermos como inputs path = "aaa.txt.rle" e n = 4, temos como resultado path = "aaa.txt"
-  Return 1 caso seja bem sucedido, se o return for 0 enta mt provavelmente o path não está corretamente formatado */
-void removeCharsFromPath (char *path, char *path_new, int n){
+  Exemplo: Se tivermos como inputs path = "aaa.txt.rle" e n = 4, temos como resultado path = "aaa.txt"*/
+void removeCharsFromPath (char *path, char **path_new, int n){
     int i;
     for(i = 0;path[i] != '\0';i++);
-    strncpy(path_new,path,i-n);
+    i = i - n + 1; /* tamanho da string new */
+    *path_new = (char *) malloc(i);
+    strncpy(*path_new,path,i-1);
 }
 
+void descobrePathCod(char *path_shaf, char **path_cod){
+    removeCharsFromPath(path_shaf,path_cod,5);
+    strcat(*path_cod,".cod");
+}
 
 /************** RLE ***************/
 
@@ -41,13 +46,9 @@ void print(FILE *fp, char valor_rle, int n_rep){
 }
 
 /* Faz descompressão RLE (Cria um novo ficheiro) */
-void decompressRLE(char *path){
-    FILE *fp_rle, *fp_new;
-    char ch, path_new[PATH_MAX_SIZE];
+void decompressRLE(FILE *fp_rle, FILE *fp_new){
+    char ch;
     int nr_rep;
-    removeCharsFromPath(path,path_new,4);
-    fp_rle = fopen(path,"r");
-    fp_new = fopen(path_new,"a+");    /*lê desde o inicio, acrescenta só no fim*/
     while((ch = (char)fgetc(fp_rle)) != EOF){
         if(ch == '\0'){
             ch     = (char)fgetc(fp_rle);
@@ -56,8 +57,6 @@ void decompressRLE(char *path){
         }
         else fputc(ch,fp_new);
     }
-    fclose(fp_rle);
-    fclose(fp_new);
 }
 
 
@@ -135,22 +134,12 @@ void analizaBloco(FILE *fp, int *tam, char *chars, char **codes, int *nr_codes){
       }*/
 }
 
-void swap_int(int* a, int* b){
-    int t = *a;
-    *a = *b;
-    *b = t;
-}
-
-void swap_char(char* a, char* b){
-    char t = *a;
-    *a = *b;
-    *b = t;
-}
-
-void swap_char_pointers(char** a, char** b){
-    char* t = *a;
-    *a = *b;
-    *b = t;
+void swap(void *a, void *b, size_t s){
+    void *tmp = malloc(s);
+    memcpy(tmp,a,s);
+    memcpy(a,b,s);
+    memcpy(b,tmp,s);
+    free(tmp);
 }
 
 /* funçao auxiliar ao quicksort */
@@ -161,14 +150,14 @@ int partition (int *tam, char *chars, char **codes, int low, int high){
     for (j = low; j <= high- 1; j++){
         if (tam[j] < pivot){
             i++;
-            swap_int(&tam[i], &tam[j]);
-            swap_char(&chars[i],&chars[j]);
-            swap_char_pointers(&codes[i], &codes[j]);
+            swap(&tam[i], &tam[j], sizeof(int));
+            swap(&chars[i],&chars[j], sizeof(char));
+            swap(&codes[i], &codes[j], sizeof(char*));
         }
     }
-    swap_int(&tam[i + 1], &tam[high]);
-    swap_char(&chars[i + 1], &chars[high]);
-    swap_char_pointers(&codes[i + 1], &codes[high]);
+    swap(&tam[i + 1], &tam[high], sizeof(int));
+    swap(&chars[i + 1], &chars[high], sizeof(char));
+    swap(&codes[i + 1], &codes[high], sizeof(char*));
     return (i + 1);
 }
 
@@ -240,47 +229,53 @@ void decompressSF(FILE *fp_shaf,FILE *fp_cod, FILE *fp_new){
     }
 }
 
-void decompressSF_RLE(char *path_cod, char *path_shaf){
-    char path_new[PATH_MAX_SIZE];
-    removeCharsFromPath(path_shaf,path_new,5);
-    FILE *fp_shaf = fopen(path_shaf,"rb"), 
-         *fp_cod  = fopen(path_cod,"r"),
-         *fp_new  = fopen(path_new,"w");
+void initDecompressRLE(char *path){
+    char *path_original; removeCharsFromPath(path,&path_original,4);
+    FILE *fp_rle        = fopen(path,"rb"),
+         *fp_original   = fopen(path_original,"w");
+    decompressRLE(fp_rle,fp_original);
+    fclose(fp_rle);
+    fclose(fp_original);
+}
+
+//modo == '0', não fazer descompressão RLE
+void decompressSF_RLE(char modo, char *path_shaf){
+    char *path_new; removeCharsFromPath(path_shaf,&path_new,5);
+    char *path_cod; descobrePathCod(path_shaf,&path_cod);
+    FILE *fp_shaf  = fopen(path_shaf,"rb"), 
+         *fp_cod   = fopen(path_cod,"r"),
+         *fp_new   = fopen(path_new,"wb+");
     char check_RLE = checkRLE(fp_cod);
     decompressSF(fp_shaf,fp_cod,fp_new);
+    if(modo != '0' && check_RLE == 'R') {
+        char *path_original; removeCharsFromPath(path_new,&path_original,4);
+        FILE *fp_original = fopen(path_original,"wb");
+        fseek(fp_new,0,SEEK_SET);
+        decompressRLE(fp_new, fp_original);
+        fclose(fp_original);
+    }
     fclose(fp_shaf); 
     fclose(fp_cod); 
     fclose(fp_new); 
-    if(check_RLE == 'R') decompressRLE(path_new);
 }
 
-int main() {
-    clock_t tic = clock();
-    //FILE *fp = fopen("aaa.txt.cod","r");
-    /* for(int j = 0; j<nr_codes; j++){
-    //        printf("j = %03d /tam = %02d / str = %s / char = %c\n",j,tam[j],codes[j],chars[j]);
-    //     }*/
-    
-    //unsigned char buffer_shaf[2]; char buffer_new[8]; char *chars; char **codes ; int nr_codes = 0; int tam_buffer_new = 8;
-    //buffer_shaf[0] = (unsigned char) 155;
-    //buffer_shaf[1] = (unsigned char) 176;
-    //int *tam;
-    //inicializa_arr(&tam,&chars,&codes,256);
-    //fseek(fp,10,SEEK_CUR);
-    //analizaBloco(fp,tam,chars,codes,&nr_codes);
-    //quickSort(tam,chars,codes,0,nr_codes-1);
-    //auxDecompressSF(buffer_shaf, buffer_new, chars, codes, nr_codes,&tam_buffer_new);
-    //int i = 0;
-    //while(i<tam_buffer_new){
-    //    printf("%c",buffer_new[i]);
-    //    i++;
-    //}
-    //printf("\n\n");
-    //
-    //fclose(fp);
-    //decompressSF_RLE("aaa.txt.cod","aaa.txt.shaf");
-    decompressRLE("aaa.txt.rle");
-    clock_t toc = clock();
-    printf("Elapsed: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
+void moduloD(int argc, char *argv[]){
+    if(argc == 4) decompressSF_RLE('1',argv[1]);
+    else{/*Caso haja mais do que 5 argumentos, os últimos sáo ignorados"*/
+        if(!strcmp(argv[4],"s")) decompressSF_RLE('0',argv[1]);
+        else if(!strcmp(argv[4],"r")) initDecompressRLE(argv[1]);
+        else printf("Comando inválido!\n");
+    }
+}
+
+int main(int argc, char *argv[]) {
+    if(argc > 1){   
+        clock_t startTime = clock();
+        if(!strcmp(argv[2],"-m"))
+            if(!strcmp(argv[3],"d")) moduloD(argc,argv);
+        clock_t finishTime = clock();
+        printf("Tempo de execução: %f milisegundos\n", (double)(finishTime - startTime) * 1000 / CLOCKS_PER_SEC );
+    }
+    else printf("Comando inválido! Utilize o comando \"shafa --help\" para mais informação.\n");
     return 0;
 }
