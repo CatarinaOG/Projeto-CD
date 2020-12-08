@@ -183,7 +183,7 @@ void quickSort(int *tam, char *chars, char **codes, int low, int high){
 
 /*Adiciona um bit*/
 void addBit(char *str,unsigned char *aux,int *shifts, int *prox_index){
-    if(*aux< 128) str[*prox_index] = '0';
+    if((*aux) < 128) str[*prox_index] = '0';
     else str[*prox_index] = '1';
     str[(*prox_index)+1] = '\0';
     (*prox_index)++;
@@ -197,33 +197,26 @@ void auxDecompressSF(unsigned char *buffer_shaf, char *buffer_new, char *chars, 
     int shifts=0, _bs=0, prox_index=0;
     unsigned char aux = buffer_shaf[0];
     while(_bn < *tam_buffer_new){
-        if(shifts == 7){
+        if(shifts > 7){
             shifts = 0;
             _bs++;
-            aux= buffer_shaf[_bs];
+            aux = buffer_shaf[_bs];
         }
-
         addBit(str,&aux,&shifts,&prox_index);
         for(i=0; i<nr_codes && strcmp(str,codes[i]) ; i++);
         if(i<nr_codes){
             buffer_new[_bn] = chars[i];
             _bn++;
-            prox_index =0;
+            prox_index = 0;
         }
     }
 }
 
 /*Faz descompressao SF (cria ficheiro do tipo .rle ou original)*/
-void decompressSF(char *path_cod, char *path_shaf){
-    /*char path_new[] = "aaa.txt";*/
-    char path_new[PATH_MAX_SIZE];
-    removeCharsFromPath(path_shaf,path_new,5);
-    FILE *fp_shaf = fopen(path_shaf,"rb"), 
-         *fp_cod  = fopen(path_cod,"r"),
-         *fp_new  = fopen(path_new,"ab+");
+void decompressSF(FILE *fp_shaf,FILE *fp_cod, FILE *fp_new){
     unsigned char *buffer_shaf;
-    char **codes, *chars, *buffer_new, check_RLE = checkRLE(fp_cod);
-    int  *tam, i = 0, nr_codes = 0, nr_blocos = nrBlocosCod(fp_cod), tam_bloco_new, tam_bloco_shaf, j;
+    char **codes, *chars, *buffer_new;
+    int  *tam, i = 0, nr_codes = 0,nr_blocos = nrBlocosCod(fp_cod), tam_bloco_new, tam_bloco_shaf, j;
     skipNrBlocosShaf(fp_shaf);
     inicializa_arr(&tam, &chars, &codes,256);
     while(i < nr_blocos){
@@ -234,10 +227,10 @@ void decompressSF(char *path_cod, char *path_shaf){
         fread(buffer_shaf, sizeof(unsigned char), tam_bloco_shaf, fp_shaf); fseek(fp_shaf,1,SEEK_CUR); /*Dá skip ao '@' para ficar a apontar para o tamanho do prox bloco(n deve haver problema com o EOF)*/
         analizaBloco(fp_cod,tam,chars,codes,&nr_codes); /*O fp tem que ficar a apontar para o tamanho do proximo bloco(cuidado quando alterar para ler com buffer)*/
         quickSort(tam,chars,codes,0,nr_codes-1);
-        for(j = 0; j<nr_codes; j++){
+        /*for(j = 0; j<nr_codes; j++){
         printf("j = %03d /tam = %02d / str = %s / char = %d\n",j,tam[j],codes[j],chars[j]);
         }
-        printf("\n\n");
+        printf("\n\n");*/
         auxDecompressSF(buffer_shaf,buffer_new,chars,codes,nr_codes,&tam_bloco_new);
         fwrite(buffer_new,sizeof(char),tam_bloco_new,fp_new);
         free(buffer_new);
@@ -245,19 +238,48 @@ void decompressSF(char *path_cod, char *path_shaf){
         nr_codes = 0;
         i++;
     }
+}
+
+void decompressSF_RLE(char *path_cod, char *path_shaf){
+    char path_new[PATH_MAX_SIZE];
+    removeCharsFromPath(path_shaf,path_new,5);
+    FILE *fp_shaf = fopen(path_shaf,"rb"), 
+         *fp_cod  = fopen(path_cod,"r"),
+         *fp_new  = fopen(path_new,"w");
+    char check_RLE = checkRLE(fp_cod);
+    decompressSF(fp_shaf,fp_cod,fp_new);
     fclose(fp_shaf); 
     fclose(fp_cod); 
     fclose(fp_new); 
+    if(check_RLE == 'R') decompressRLE(path_new);
 }
 
 int main() {
     clock_t tic = clock();
-    /*FILE *fp = fopen("aaa.txt.rle.cod","r");
-     for(int j = 0; j<nr_codes; j++){
-            printf("j = %03d /tam = %02d / str = %s / char = %c\n",j,tam[j],codes[j],chars[j]);
-         }
-         fclose(fp);*/
-    decompressSF("aaa.txt.cod","aaa.txt.shaf");
+    //FILE *fp = fopen("aaa.txt.cod","r");
+    /* for(int j = 0; j<nr_codes; j++){
+    //        printf("j = %03d /tam = %02d / str = %s / char = %c\n",j,tam[j],codes[j],chars[j]);
+    //     }*/
+    
+    //unsigned char buffer_shaf[2]; char buffer_new[8]; char *chars; char **codes ; int nr_codes = 0; int tam_buffer_new = 8;
+    //buffer_shaf[0] = (unsigned char) 155;
+    //buffer_shaf[1] = (unsigned char) 176;
+    //int *tam;
+    //inicializa_arr(&tam,&chars,&codes,256);
+    //fseek(fp,10,SEEK_CUR);
+    //analizaBloco(fp,tam,chars,codes,&nr_codes);
+    //quickSort(tam,chars,codes,0,nr_codes-1);
+    //auxDecompressSF(buffer_shaf, buffer_new, chars, codes, nr_codes,&tam_buffer_new);
+    //int i = 0;
+    //while(i<tam_buffer_new){
+    //    printf("%c",buffer_new[i]);
+    //    i++;
+    //}
+    //printf("\n\n");
+    //
+    //fclose(fp);
+    //decompressSF_RLE("aaa.txt.cod","aaa.txt.shaf");
+    decompressRLE("aaa.txt.rle");
     clock_t toc = clock();
     printf("Elapsed: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
     return 0;
