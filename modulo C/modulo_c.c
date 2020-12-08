@@ -2,6 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CHECK(x) if(!(x)) return -1;
+
+void ptable(unsigned char *table,int tam){
+	for(int i = 0;i < 8;i++){
+		for(int j = 0;j < 256;j++){
+			printf("off-%d;letra-%5d -->",i,j);
+			for(int k = 0;k < tam;k++)
+				printf("%d ",table[i*256*tam+j*tam+k]);
+			printf("\n");
+		}
+	}
+}
+
 int read(char* path,int* tblocos[],unsigned char** codes[]){
 	FILE *fp;
 	char a[64],code;
@@ -20,8 +33,8 @@ int read(char* path,int* tblocos[],unsigned char** codes[]){
 	nblocos = atoi(a);
 	//printf("%s |%d\n",a,nblocos);
 
-	*tblocos = malloc(sizeof(int)*nblocos*2);
-	*codes = malloc(sizeof(char*)*nblocos*256);
+	CHECK(*tblocos = malloc(sizeof(int)*nblocos*2));
+	CHECK(*codes = malloc(sizeof(char*)*nblocos*256));
 	//tblocos[x+0] = tamnaho do bloco; tblocos[x+1] = o tamanho maximo dos simbolos nesse bloco  
 	for(int i = 0;i<nblocos;i++){
 		mtcode = 0;
@@ -66,19 +79,22 @@ int read(char* path,int* tblocos[],unsigned char** codes[]){
 //preencher letras vs offset ---> ver qual e mais rapido
 int makeTable(unsigned char* table,unsigned char* codes[],int tam){
 	int n,ares,res;
-	tam = tam+2;
+	tam = tam+3;
 	unsigned char *ind,*aind;
 	
 	for(int i = 0;i<256;i++){
 		n = codes[i][0]+1;
-		for(int j = 0;j< n;j++)
-			table[i*tam+j] = codes[i][j+1];
+		for(int j = 0;j<= n;j++)
+			table[i*tam+j] = codes[i][j];
 		for(int j = 1;j<8;j++){
 			ind = table+(j*256*tam+i*tam);
 			aind = table+((j-1)*256*tam+i*tam);
-			ind[0] = (aind[0]+1)%8;
+			if((ind[1] = (aind[1]+1)%8) == 0)
+				ind[0] = aind[0] + 1;
+			else
+				ind[0] = aind[0];
 			ares = 0;
-			for(int k = 1;k < tam;k++){
+			for(int k = 2;k < tam;k++){
 				res = aind[k]%2;
 				ind[k] = (aind[k] >> 1) + (ares << 7);
 				ares = res;
@@ -88,90 +104,65 @@ int makeTable(unsigned char* table,unsigned char* codes[],int tam){
 	return 1;
 }
 
-int encode(char* path,char* pathcod){
-	printf("ola");
-	unsigned char **codes = NULL,*line,off,c,*name;
-	int *tblocos = NULL,nblocos,tam,i,n;
-	FILE *fp,*out;
+int encode(char *path,char  *pathcod){
+	unsigned char *name,**codes = NULL,*in = NULL,*out = NULL,*table = NULL,*line;
+	int i,nblocos,*tblocos = NULL,off,n,tam;
+	FILE *fp,*fout;
+
 	for(i = 0;path[i] != '\0';i++);
-	printf("%d\n",i);
-	name = malloc(sizeof(char)*i+6);
+	CHECK(name = malloc(sizeof(char)*i+6));
 	if (!name) return -1;
 
-	
 	strcpy(name,path);
-	printf("%s\n",name );
 	strcpy(name+i,".shaf");
-	printf("%s\n",name );
-	// Bronze seu autista mete isto a funcionar, que tudo o que esta por cima ja esta bem
-	
-	fp = fopen(path,"r");
-	out = fopen(name,"w");
-	if (!fp) return -1;
-	if (!out) return -1;
-	
-	fprintf(out,"@%d@",nblocos);
+
+	CHECK(fp = fopen(path,"r"));
+	CHECK(fout = fopen(name,"w"));
 
 	nblocos = read(pathcod,&tblocos,&codes);
-	unsigned char res[tblocos[nblocos*2]],*table = NULL;
+	n = tblocos[2*(nblocos-1)];
+	if (n < tblocos[0]) n = tblocos[0];
+	CHECK(in = malloc(sizeof(unsigned char)*n));
+	CHECK(out = malloc(sizeof(unsigned char)*n));
 
-	for(i = 0;i < nblocos;i++){
-		tam = tblocos[i*2+1] + 2;
-		table = malloc(sizeof(unsigned char) * (tam+2)*256*8);
-		makeTable(table,codes,tam);
-		
+	fprintf(fout,"@%d",nblocos);
+	
+	for(int i = 0;i<nblocos;i++){
+		fread(in,sizeof(unsigned char),tblocos[i*2],fp);
+		tam = tblocos[i*2+1] + 3;
+		CHECK(table = malloc(sizeof(unsigned char)*256*8*tam));
+		makeTable(table,codes,tam-3);
+		//ptable(table,tam);
+		printf("%d\n",in[1173]);
+
 		off = 0;
 		n = 0;
-		for(int j = 0;j < tblocos[nblocos*2]; j++){
-			c = fgetc(fp);
-			line = table+(off*256*tam+c*tam);
-			off = line[0];
-			res[n] += line[1];
-			for(int k = 2;k < tam && line[k] != 0;k++)
-				res[++n] = line[k];
-			if (off == 0) n++;
+		out[0] = 0;
+		printf("%d\n",tblocos[i*2]);
+		for(int j = 0;j<tblocos[i*2];j++){
+			line = table+(off*256*tam+in[j]*tam);
+			//printf("off->%d|n->%d\n",off,n);
+			//printf("%c|%d|%d->%s\nout->",in[j],in[j],j,line);
+			out[n] += line[2];
+			for(int k = 1;k<line[0];k++) out[++n] = line[k+2];
+			off = line[1];
+			//for(int k = 0;k<=n;k++) printf("%#x ",out[k]);
+			//putc('\n',stdout);
 		}
-		fprintf(out,"%d@",n);
-		for(int i = 0;i < n; i++) fputc(res[i],out);
-		fputc('@',out);
+		out[++n] = '\0';
+		fprintf(fout,"@%d@",n);
+		fwrite(out,sizeof(unsigned char),n,fout);
+		//putc('@',fout);
 		free(table);
-
 	}
-	fputc('0',out);
-	return 1;
-	
+	fclose(fout);
+	fclose(fp);
 }
+
 
 int main(){
 	int n1,*n = NULL,tam = 1;
 	unsigned char **c = NULL,table[256*(tam+2)*8];
-
-	n1 = read("aaa.txt.cod",&n,&c);
-	makeTable(table,c,tam);
-	tam += 2;
-	for (int i = 0;i < n1;i++){
-		printf("%d|",n[i]);
-	}
-	putc('\n',stdout);
-	for(int i = 0;i<n1;i++){
-		for(int j = 0;j<256;j++){
-			for(int k = 0;c[i*256+j][k] != '\0';k++){
-				printf("%d ",c[i*256+j][k]);	
-			}
-			putc('\n',stdout);
-		}
-		putc('\n',stdout);
-	}
-
-	for(int i = 0;i < 8;i++){
-		for(int j = 0;j < 256;j++){
-			printf("off-%d;letra-%5d -->",i,j);
-			for(int k = 0;k < tam;k++)
-				printf("%d ",table[i*256*tam+j*tam+k]);
-			printf("\n");
-		}
-	}
-	
 	encode("aaa.txt","aaa.txt.cod");
 
 	return 1;
