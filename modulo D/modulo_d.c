@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 
+
 char checkRLE(FILE *fp){
     fseek(fp,1,SEEK_SET);
     return (char) fgetc(fp);
@@ -16,7 +17,7 @@ int nrBlocosCod(FILE *fp){
     return nr_blocos;
 }
 
-void removeCharsFromPath (char *path, char **path_new, int n){
+void removeExtensao (char *path, char **path_new, int n){
     int i;
     for(i = 0;path[i] != '\0';i++);
     i = i - n + 1; /* tamanho da string new */
@@ -24,9 +25,14 @@ void removeCharsFromPath (char *path, char **path_new, int n){
     strncpy(*path_new,path,i-1);
 }
 
-void descobrePathCod(char *path_shaf, char **path_cod){
-    removeCharsFromPath(path_shaf,path_cod,5);
-    strcat(*path_cod,".cod");
+void substituiExtensao(char *path, char **path_new, char *ext_new, int n){
+    removeExtensao(path,path_new,n);
+    strcat(*path_new,ext_new);
+}
+
+void mudaInputType(char *inputType){
+    if((*inputType) == 'C') (*inputType) = 'T';
+    else (*inputType) = 'C';
 }
 
 /************** RLE ***************/
@@ -37,26 +43,60 @@ void print(FILE *fp, char valor_rle, int n_rep){
         fputc(valor_rle,fp); /*(ASCII->Valor)*/
 }
 
-void decompressRLE(FILE *fp_rle, FILE *fp_new){
-    char ch;
-    int nr_rep;
-    while((ch = (char)fgetc(fp_rle)) != EOF){
-        if(ch == '\0'){
-            ch     = (char)fgetc(fp_rle);
-            nr_rep = fgetc(fp_rle);
-            print(fp_new,ch,nr_rep);
+int *bufferSizesRLE(FILE *fp, int *nr_blocos){
+    char ch, inputType = 'C';
+    int _bloco = 0, skip = 1; /*A variável skip é booleana, permite saber se podemos dar um skip de 256 chars(valor mínimo de cada bloco do ficheiro .freq)*/
+    
+    fseek(fp,3,SEEK_SET); /* Skip @<R|N>@ */
+    fscanf(fp,"%d",nr_blocos); 
+
+    int *buffer_sizes_rle = (int *) malloc((*nr_blocos)*sizeof(int));
+
+    while(1){
+        if((ch = (char) fgetc(fp)) == '@'){
+            mudaInputType(&inputType);
+            skip = 1;
+            if(inputType == 'T'){
+                if((char) fgetc(fp) == '0') return buffer_sizes_rle;
+                fseek(fp,-1,SEEK_CUR);
+                fscanf(fp,"%d",&(buffer_sizes_rle[_bloco]));
+                _bloco++;
+            }
+            else {
+                if(skip == 1) {
+                    fseek(fp,256,SEEK_CUR);
+                    skip = 0;    
+                }
+            }
         }
-        else fputc(ch,fp_new);
+    }
+    return buffer_sizes_rle;
+}
+
+void decompressRLE(FILE *fp_rle, FILE *fp_new, int *buffer_sizes_rle, int *nr_blocos){
+    char ch;
+    int _bloco, _buffer, nr_rep, tam_bloco;
+
+    for(_bloco = 0; _bloco < (*nr_blocos); _bloco++){
+        tam_bloco = buffer_sizes_rle[_bloco];
+        char *buffer_rle = (char *) malloc(sizeof(char)*tam_bloco);
+        fread(buffer_rle, sizeof(char), tam_bloco, fp_rle);
+
+        for(_buffer = 0; _buffer < tam_bloco ; _buffer++){
+            if(buffer_rle[_buffer] == '\0'){
+                ch     = buffer_rle[++_buffer];
+                nr_rep = (int) buffer_rle[++_buffer];
+                print(fp_new,ch,nr_rep);
+            }
+            else fputc(buffer_rle[_buffer],fp_new);
+        }
+
+        free(buffer_rle);
     }
 }
 
 
 /************** SHANNON-FANO ***************/
-
-void mudaInputType(char *inputType){
-    if((*inputType) == 'C') (*inputType) = 'T';
-    else (*inputType) = 'C';
-}
 
 void inicializa_arr(int **tam, char **chars, char ***codes, int N){
     *tam    = (int *)   malloc(sizeof(int)*N);    /*É suposto inicializar na funcao onde é criada(alterar para 16 caso consiga pôr o realloc a funcionar)*/
@@ -76,7 +116,6 @@ void tamanhoBloco(FILE *fp, int *tam_bloco){
     fscanf(fp,"%d",tam_bloco);
     fseek(fp,1,SEEK_CUR); /*Dá skip ao @, para que fique pronto a ler o bloco*/
 }
-
 
 void analizaBloco(FILE *fp, int *tam, char *chars, char **codes, int *nr_codes){
     /*tam    = (int *)   malloc(sizeof(int)*256);    //É suposto inicializar na funcao onde é criada(alterar para 16 caso consiga pôr o realloc a funcionar)
@@ -184,26 +223,31 @@ void auxDecompressSF(unsigned char *buffer_shaf, char *buffer_new, char *chars, 
     }
 }
 
-void decompressSF(FILE *fp_shaf,FILE *fp_cod, FILE *fp_new){
+/*Faz descompressao SF (cria ficheiro do tipo .rle ou original)
+  tam_blocos_new == NULL implica que não há descompressão RLE*/
+void decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new, int **buffer_sizes_rle, int *nr_blocos){
     unsigned char *buffer_shaf;
     char **codes, *chars, *buffer_new;
-    int  *tam, i = 0, nr_codes = 0,nr_blocos = nrBlocosCod(fp_cod), tam_bloco_new, tam_bloco_shaf;
-    skipNrBlocosShaf(fp_shaf);
+    int *tam, i = 0, nr_codes = 0, tam_bloco_new, tam_bloco_shaf;
+    *nr_blocos = nrBlocosCod(fp_cod);
+    if(buffer_sizes_rle) *buffer_sizes_rle = (int *) malloc((*nr_blocos) * sizeof(int));
     inicializa_arr(&tam, &chars, &codes,256);
-    while(i < nr_blocos){
+    skipNrBlocosShaf(fp_shaf);
+
+    while(i < (*nr_blocos)){
         tamanhoBloco(fp_cod,&tam_bloco_new);
         buffer_new = (char *) malloc(sizeof(char)*tam_bloco_new);
+        if(buffer_sizes_rle) (*buffer_sizes_rle)[i] = tam_bloco_new;
+
         tamanhoBloco(fp_shaf,&tam_bloco_shaf);
         buffer_shaf = (unsigned char *) malloc(sizeof(unsigned char)*tam_bloco_shaf);
         fread(buffer_shaf, sizeof(unsigned char), tam_bloco_shaf, fp_shaf); fseek(fp_shaf,1,SEEK_CUR); /*Dá skip ao '@' para ficar a apontar para o tamanho do prox bloco(n deve haver problema com o EOF)*/
+        
         analizaBloco(fp_cod,tam,chars,codes,&nr_codes); /*O fp tem que ficar a apontar para o tamanho do proximo bloco(cuidado quando alterar para ler com buffer)*/
         quickSort(tam,chars,codes,0,nr_codes-1);
-        /*for(j = 0; j<nr_codes; j++){
-        printf("j = %03d /tam = %02d / str = %s / char = %d\n",j,tam[j],codes[j],chars[j]);
-        }
-        printf("\n\n");*/
         auxDecompressSF(buffer_shaf,buffer_new,chars,codes,nr_codes,&tam_bloco_new);
         fwrite(buffer_new,sizeof(char),tam_bloco_new,fp_new);
+        
         free(buffer_new);
         free(buffer_shaf);
         nr_codes = 0;
@@ -211,28 +255,36 @@ void decompressSF(FILE *fp_shaf,FILE *fp_cod, FILE *fp_new){
     }
 }
 
-void initDecompressRLE(char *path){
-    char *path_original; removeCharsFromPath(path,&path_original,4);
-    FILE *fp_rle        = fopen(path,"rb"),
-         *fp_original   = fopen(path_original,"w");
-    decompressRLE(fp_rle,fp_original);
+void initDecompressRLE(char *path_rle){
+    char *path_original, *path_freq;
+    removeExtensao(path_rle,&path_original,4);
+    substituiExtensao(path_rle,&path_freq,".freq",0);
+    FILE *fp_rle      = fopen(path_rle,"rb"),
+         *fp_freq     = fopen(path_freq,"r"),
+         *fp_original = fopen(path_original,"w");
+    int nr_blocos = 0, *buffer_sizes_rle = bufferSizesRLE(fp_freq, &nr_blocos);
+    decompressRLE(fp_rle, fp_original, buffer_sizes_rle, &nr_blocos);
     fclose(fp_rle);
     fclose(fp_original);
 }
 
 void decompressSF_RLE(char modo, char *path_shaf){
-    char *path_new; removeCharsFromPath(path_shaf,&path_new,5);
-    char *path_cod; descobrePathCod(path_shaf,&path_cod);
+    char *path_new; removeExtensao(path_shaf,&path_new,5);
+    char *path_cod; substituiExtensao(path_shaf,&path_cod,".cod",5);
     FILE *fp_shaf  = fopen(path_shaf,"rb"), 
          *fp_cod   = fopen(path_cod,"r"),
          *fp_new   = fopen(path_new,"wb+");
     char check_RLE = checkRLE(fp_cod);
-    decompressSF(fp_shaf,fp_cod,fp_new);
-    if(modo != '0' && check_RLE == 'R') {
-        char *path_original; removeCharsFromPath(path_new,&path_original,4);
+    int nr_blocos = 0;
+
+    if(modo == '0' || check_RLE == 'N') decompressSF(fp_shaf,fp_cod,fp_new,NULL,&nr_blocos);
+    else{
+        int *buffer_sizes_rle;
+        decompressSF(fp_shaf,fp_cod,fp_new,&buffer_sizes_rle,&nr_blocos);
+        char *path_original; removeExtensao(path_new,&path_original,4);
         FILE *fp_original = fopen(path_original,"wb");
         fseek(fp_new,0,SEEK_SET);
-        decompressRLE(fp_new, fp_original);
+        decompressRLE(fp_new, fp_original, buffer_sizes_rle, &nr_blocos);
         fclose(fp_original);
     }
     fclose(fp_shaf); 
