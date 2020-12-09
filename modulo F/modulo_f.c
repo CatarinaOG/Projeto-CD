@@ -11,7 +11,7 @@ typedef struct blockfreq {
 	int freq[255];
 	int freqRLE[255];
 	struct blockfreq *next;
-}*BFreq;
+} *BFreq;
 
 
 
@@ -193,105 +193,146 @@ int checkCompression (float source,float result){
 
 
 
-// 64*1024=65536
+
+
 // esta funcao vai retornar a quantidade de blocos criados
-int RLEcompression (FILE *fp_origin, int *arrayFreq, char *fileName){
+// espaco para se fazer a compressao RLE, escrever no ficheiro e contar os caracteres.... isto se for para ser feita
+// caso contrario apenas preencher a lista das frequencias
+int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 	
-	FILE *fp_RLE = fopen (fileName, "w");
+	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); // auxiliar para criar a freqList
+	*freqList = newBFreq;
 	
-	// abrir o ficheiro para escrever o resultado da compressao RLE
-	if (fp_RLE){
-		// espaco para se fazer a compressao RLE, escrever no ficheiro e contar os caracteres.... isto se for para ser feita
-		// caso contrario apenas preencher a lista das frequencias
-		
-		int k = charLeft(0, fp_origin);  // numero de caracteres
-		
-		int rep;  // repeticoes de um caracter consecutivas
-		char repChar;   // caracter analizado
-		
-		int buffSize // ultima posicao usada no blockBuffer
-		int block = 1;  // numero do bloco
-		int posBuff;  // posicao blockBuffer
-		int posRLE = 0;  // posicao blockRLE
-		int checkCom = 1  // validade da compressao (0 == valido)
-		
-		char blockRLE [66561]  // bloco com o resultado da compressao RLE
-		char blockBuffer [66561];  // bloco analisado              // caso de uma string acabar com /0
-		char auxBuffer [1025];  // bloco analisado
-		
-		fgets (auxBuffer, 1025, fp_origin); // carregar o primeiro KB no auxBuffer
-		
-		if (feof (fp_origin)){  // comecar a compressao
-			do{
+	int k = charLeft(fp_origin);  // numero de caracteres
+	
+	int rep;  // repeticoes de um caracter consecutivas
+	char repChar;   // caracter analizado
+	
+	int block = 0;  // numero do bloco
+	int checkCom = 1;  // validade da compressao (0 == valido)
+	
+	int buffSize; // ultima posicao usada no blockBuffer
+	int posBuff;  // posicao blockBuffer
+	char auxBuffer [1025];  // auxiliar para o blockBuffer
+	char blockBuffer [66561];  // bloco analisado
+	
+	int posRLE = 0;  // posicao blockRLE
+	char blockRLE [66561];  // bloco com o resultado da compressao RLE
+	
+	int fileIsOpen = 0;
+	FILE *fp_RLE;
+	
+	
+	
+	fgets (auxBuffer, 1025, fp_origin); // carregar o primeiro KB no auxBuffer
+	
+	if (feof (fp_origin)){  // comecar a compressao
+		do{	
+			block++;
+			
+			//  preparar o blockBuffer
+			strcpy (blockBuffer, auxBuffer);
+			fgets (blockBuffer + 1023, 64513, fp_origin);    // acrescentar os 63 KB ao blockBuffer (63*1024 + 1) + 1 KB do auxBuffer (0 -> 1023)
+			buffSize = 65536;
+			
+			if (!feof(fp_origin)){  // caso em que e possivel que o fcheiro acabe no proximo KB
 				
-				strcpy (blockBuffer, auxBuffer);
-				fgets (blockBuffer + 1023, 64513, fp_origin);    // acrescentar os 63 KB ao blockBuffer (63*1024 + 1) + 1 KB do auxBuffer (0 -> 1023)
-				buffSize = 65536;
+				fgets (auxBuffer, 1025, fp_origin);
 				
-				if (!feof(fp_origin)){  // caso em que e possivel que o fcheiro acabe no proximo KB
+				if (feof (fp_origin))  // caso acabe no proximo KB
+					strcpy (blockBuffer, auxBuffer);
+					buffSize += 1024;
+			}
+			
+			
+			
+			// caso em que se faz a compressao RLE
+			if (checkCom == 0 || block == 1){
+				
+				rep = 1;
+				repChar = blockBuffer[0];
+				
+				for (posBuff = 1; posBuff < buffSize && posBuff < (k - block*65536); posBuff++){   // ciclo onde executa a compressao
 					
-					fgets (auxBuffer, 1025, fp_origin);
-					
-					if (feof (fp_origin))  // caso acabe no proximo KB
-						strcpy (blockBuffer, auxBuffer);
-						buffSize += 1024;
+					if ((repChar != blockBuffer[posBuff] && (rep > 4 || repchar == 0)) || rep >= 255){  // casos em que se aplica {0}{simbolo}{repeticoes}
+						blockRLE[posRLE++] = 0; 
+						blockRLE[posRLE++] = repChar;
+						blockRLE[posRLE++] = rep;
+						rep = 1;
+						repChar = blockBuffer[posBuff];
+					}
+					else if (repChar != blockBuffer[posBuff] && rep < 4) { // caso em que nao é eficiente fazer a compressao
+						for (; rep > 0; rep--, posRLE++) 
+							blockRLE[posRLE] = repChar;
+						rep = 1;
+						repChar = blockBuffer[posBuff];
+					}
+					else {      // caso em que ha uma repeticao mas que o valor ainda nao atingiu os 255
+						rep++;
+					}
 				}
 				
+				if (block == 1 && checkCompression(posBuff, posRLE))  // testa se vale a pena aplicar a compressao ao resto do ficheiro
+					checkCom = 0;
 				
-				if (block == 1 || checkCom == 0){   // casos em que se faz a compressao RLE
-					
-					rep = 1;
-					repChar = blockBuffer[0];
-					
-					for (posBuff = 1; posBuff < buffSize && posBuff < (k - block*65536); posBuff++){   // ciclo onde executa a compressao
-						
-						if ((repChar != blockBuffer[posBuff] && (rep > 4 || repchar == 0)) || rep >= 255){ // casos em que se aplica {0}{simbolo}{repeticoes}
-							blockRLE[posRLE++] = 0;
-							blockRLE[posRLE++] = repChar;
-							blockRLE[posRLE++] = rep;
-							rep = 1;
-							repChar = blockBuffer[posBuff];
-						}
-						else if (repChar != blockBuffer[posBuff] && rep < 4) { // caso em que nao é eficiente fazer a compressao
-							for (; rep > 0; rep--, posRLE++) 
-								blockRLE[posRLE] = repChar;
-							rep = 1;
-							repChar = blockBuffer[posBuff];
-						}
-						else {      // caso em que ha uma repeticao mas que o valor ainda nao atingiu os 255
-							rep++;
-						}
+				if (checkCom == 0) {
+					// abrir o ficheiro para escrever o resultado da compressao RLE
+					if (!fileIsOpen) {
+						fileIsOpen = 1;
+						FILE *fp_RLE = fopen (fileName, "w");
 					}
 					
-					if (block == 1 && checkCompression(posBuff, posRLE))   // testa se vale a pena aplicar a compressao ao resto do ficheiro
-						checkCom = 0;
+					if (fp_RLE){
+						
+						
+						
+						
+						
+					}
+					else {
+						printf("Can't open %s\n", fileName);
+						exit(1);
+					}
 				}
 				
-				// falta preencher as listas de frequencias (mas nao e aqui)
-				// falta criar o ficheiro com o resultado do RLE
-				// neste ponto as listas blockBuffer e blockRLE tem os caracteres originais e do resultado apenas do bloco
-				
-				// nao esquecer que mais tarde temos de considerar outros valores para os blocos, e que a compressao pode ser forcada a acontecer
-				// fileFreq ainda nao esta feita
-				// ja agora..... nao apaguei nada do que estava feito
-				
-				
-				block++;
-				
-			} while (!foef(fp_origin));
-		}
-		else {   // contar frequencias nos 1024 iniciais (não tem tamanho minimo de 1KB)
-			// for (int i = 0; auxBuffer[i] != '/0'; i++) arrayFreq [auxBuffer[i]]++;
-		}
-		
-		
-		
-		return block;
+				for (int i = 0; i < posRLE; i++)
+					newBFreq->freqRLE[blockRLE[i]]++;
+			}
+			else 
+				newBFreq->freqRLE = NULL;
+			
+			// falta criar o ficheiro com o resultado do RLE
+			// neste ponto as listas blockBuffer e blockRLE tem os caracteres originais e do resultado apenas do bloco
+			
+			// nao esquecer que mais tarde temos de considerar outros valores para os blocos, e que a compressao pode ser forcada a acontecer
+			// fileFreq ainda nao esta feita
+			// ja agora..... nao apaguei nada do que estava feito
+			
+			
+			// preenche a lista com as frequencias dos caracteres deste bloco
+			newBFreq->blockSize = posBuff;
+			
+			for (int i = 0; i < posBuff; i++)
+				newBFreq->freq[blockBuffer[i]]++;
+			
+			newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
+			newBFreq = newBFreq->next;
+			
+		} while (!foef(fp_origin));
 	}
-	else {
-		printf("Can't open %s\n", fileName);
-		exit(1);
+	else {   // contar frequencias nos 1024 iniciais (não tem tamanho minimo de 1KB)
+		
+		newBFreq->next = NULL;
+		newBFreq->freqRLE = NULL;
+		newBFreq->blockSize = k
+		
+		for (int i = 0; i < k; i++)
+			newBFreq->freq[auxBuffer[i]]++;
 	}
+	
+	
+	
+	return block;
 }
 
 
@@ -302,7 +343,7 @@ int RLEcompression (FILE *fp_origin, int *arrayFreq, char *fileName){
 
 
 // a partir de um array de 255 inteiros cria um ficheiro com as frequencias dos caracteres (o nome do ficheiro tem de ser fornecido)
-int* fileFreq (int *arrayFreq, char *fileName){
+int* fileFreq (BFreq *freqList, char *fileName){
 	// abrir o ficheiro para escrever frequencias
 	f = fopen (fileName, "w");
 	if (f){
@@ -339,9 +380,9 @@ int main(int argc, char *argv[]){
      	
 	    if (fp_origin){
 	    	
-	    	int *arrayFreq[255] = {0};
+	    	BFreq *freqList[255] = {0};
 	    	
-	    	fp_RLE = RLEcompression(fp_origin, arrayFreq, strcat(f,".rle"));
+	    	fp_RLE = RLEcompression(fp_origin, &freqList, strcat(f,".rle"));
 			strcpy (f, argv[1]); // super importante pois a string f ficou danificada ao ser usada!!!!   ->    cenas.txt -> cenas.txt.rle
 	    	
 	    	// criar o ficheiro com as frequencias dos caracteres no ficheiro original (?realizado independentemente da situa?o)
