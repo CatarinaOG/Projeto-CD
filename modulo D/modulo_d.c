@@ -45,7 +45,7 @@ void print(FILE *fp, char valor_rle, int n_rep){
 
 int *bufferSizesRLE(FILE *fp, int *nr_blocos){
     char ch, inputType = 'C';
-    int _bloco = 0, skip = 1; /*A variável skip é booleana, permite saber se podemos dar um skip de 256 chars(valor mínimo de cada bloco do ficheiro .freq)*/
+    int _bloco = 0; /*A variável skip é booleana, permite saber se podemos dar um skip de 256 chars(valor mínimo de cada bloco do ficheiro .freq)*/
     
     fseek(fp,3,SEEK_SET); /* Skip @<R|N>@ */
     fscanf(fp,"%d",nr_blocos); 
@@ -53,24 +53,20 @@ int *bufferSizesRLE(FILE *fp, int *nr_blocos){
     int *buffer_sizes_rle = (int *) malloc((*nr_blocos)*sizeof(int));
 
     while(1){
-        if((ch = (char) fgetc(fp)) == '@'){
+        ch = (char) fgetc(fp);
+        if(ch == '@'){
             mudaInputType(&inputType);
-            skip = 1;
-            if(inputType == 'T'){
+
+            if(inputType == 'T' ){
                 if((char) fgetc(fp) == '0') return buffer_sizes_rle;
                 fseek(fp,-1,SEEK_CUR);
                 fscanf(fp,"%d",&(buffer_sizes_rle[_bloco]));
                 _bloco++;
-            }
-            else {
-                if(skip == 1) {
-                    fseek(fp,256,SEEK_CUR);
-                    skip = 0;    
-                }
-            }
+
+            }else  fseek(fp,256,SEEK_CUR);
+
         }
     }
-    return buffer_sizes_rle;
 }
 
 void decompressRLE(FILE *fp_rle, FILE *fp_new, int *buffer_sizes_rle, int *nr_blocos){
@@ -205,7 +201,7 @@ void addBit(char *str,unsigned char *aux,int *shifts, int *prox_index){
 void auxDecompressSF(unsigned char *buffer_shaf, char *buffer_new, char *chars, char **codes, int nr_codes, int *tam_buffer_new){
     char str[256];
     int i  , _bn = 0; /*_bn = indice buffer_new    _bs = indice buffer_shaf*/
-    int shifts=0, _bs=0, prox_index=0;
+    int shifts=0, _bs=0, prox_index=0;           /* shifts = nª de bits analisados */
     unsigned char aux = buffer_shaf[0];
     while(_bn < *tam_buffer_new){
         if(shifts > 7){
