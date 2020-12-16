@@ -25,6 +25,21 @@ void pread(int tblocos[],unsigned char* codes[],int nblocos){
 	}
 }
 
+void print(char* name,int nblocos,double time,int *tblocos,int *cblocos){
+	double taxa = 0;
+
+	printf("Gonçalo Santos, a93279,Tiago Carneiro, a93207, MIEI/CD,\n");
+	printf("Módulo: c (codificação dum ficheiro de símbolos)\n");
+	printf("Número de blocos: %d\n",nblocos);
+	for(int i = 0;i < nblocos; i++){
+		printf("Tamanho antes/depois & taxa de Compressão (bloco %d): %d/%d\n",i+1,tblocos[i*2],cblocos[i]);
+		taxa += cblocos[i]/tblocos[i*2];
+	}
+	printf("Taxa de compressão global: %.0f%\n",taxa/nblocos);
+	printf("Tempo de execução do módulo (milissegundos): %d\n",time);
+	printf("Ficheiro gerado: %s\n",name);
+}
+
 int read1(char* path,int* tblocos[],unsigned char** codes[]){
 	int nblocos,tcode,bloco,c,ind,n,mtcode,lim;
 	unsigned char buffer[BREAD],a[64];
@@ -154,8 +169,11 @@ int makeTable(unsigned char* table,unsigned char* codes[],int tam){
 
 int encode(char *path,char  *pathcod){
 	unsigned char *name,**codes = NULL,*in = NULL,*out = NULL,*table = NULL,*line;
-	int i,nblocos,*tblocos = NULL,off,n,tam;
+	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam;
+	clock_t t;
 	FILE *fp,*fout;
+
+	t = clock();
 
 	for(i = 0;path[i] != '\0';i++);
 	CHECK(name = malloc(sizeof(char)*i+6));
@@ -168,6 +186,7 @@ int encode(char *path,char  *pathcod){
 	CHECK(fout = fopen(name,"w"));
 
 	nblocos = read1(pathcod,&tblocos,&codes);
+	cblocos = malloc(sizeof(int)*nblocos);
 	n = tblocos[2*(nblocos-1)];
 	if (n < tblocos[0]) n = tblocos[0];
 	CHECK(in = malloc(sizeof(unsigned char)*n));
@@ -195,11 +214,15 @@ int encode(char *path,char  *pathcod){
 			//putc('\n',stdout);
 		}
 		out[++n] = '\0';
+		cblocos[i] = n;
 		fprintf(fout,"@%d@",n);
 		fwrite(out,sizeof(unsigned char),n,fout);
 		//putc('@',fout);
 		free(table);
 	}
+	t = (int)(t - clock())/(CLOCKS_PER_SEC/1000);
+	print(name,nblocos,t,tblocos,cblocos);
+
 	free(in);
 	free(out);
 	free(name);
