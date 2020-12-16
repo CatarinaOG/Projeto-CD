@@ -7,25 +7,33 @@
 
 /********** Análise do Bloco de codificações **********/
 
-void inicializa_arr(int **tam, char **chars, char ***codes, int N){
-    *tam    = (int *)   malloc(sizeof(int)*N);
-    *chars  = (char *)  malloc(sizeof(char)*N);
-    *codes  = (char **) malloc(sizeof(char *)*N);
+int inicializa_arr(int **tam, char **chars, char ***codes, int N){
+    if( (*tam    = (int *)   malloc(sizeof(int)*N)   ) &&
+        (*chars  = (char *)  malloc(sizeof(char)*N)  ) &&
+        (*codes  = (char **) malloc(sizeof(char *)*N)))return 1;
+    return 0;
 }
 
-void analizaBloco(FILE *fp, int *tam, char *chars, char **codes, int *nr_codes){
+void freeCodes(char **codes, int nr_codes){
+    nr_codes--;
+    for(;nr_codes >= 0;nr_codes--) free(codes[nr_codes]);
+}
+
+int analizaBloco(FILE *fp, int *tam, char *chars, char **codes, int *nr_codes){
     char a[256],
          ch;
     int  tam_aux = 0,  
          _ch = 0,
          i = 0; /*indice que indica o char*/
-    while((ch = (char) fgetc(fp)) != '@'){
-        if(ch == ';'){
+
+    do{ 
+        ch = (char) fgetc(fp);
+        if(ch == ';' || ch == '@'){
             if(tam_aux != 0){
                 tam[_ch]   = tam_aux;
-                codes[_ch] = (char *) malloc(sizeof(char)*(tam_aux+1));
                 chars[_ch] = (char) i;
                 a[tam_aux] = '\0';
+                CheckPointer(codes[_ch] = (char *) malloc(sizeof(char)*(tam_aux+1)));
                 strcpy(codes[_ch],a);
                 tam_aux = 0;
                 _ch++;
@@ -36,16 +44,11 @@ void analizaBloco(FILE *fp, int *tam, char *chars, char **codes, int *nr_codes){
             a[tam_aux] = ch;
             tam_aux++;
         }
-    }
-    if(tam_aux != 0){
-        codes[_ch] = (char *) malloc(sizeof(char)*(tam_aux+1));
-        chars[_ch] = (char) i;
-        tam[_ch]   = tam_aux;
-        a[tam_aux] = '\0';
-        strcpy(codes[_ch],a);
-        _ch++;
-    }
+    }while(ch != '@');
+
     (*nr_codes) = _ch;
+
+    return 1;
 }
 
 /********** Ordenação da lista de codificações **********/
@@ -117,7 +120,7 @@ void decompressBlockSF(unsigned char *buffer_shaf, char *buffer_new, char *chars
 
 /*fp_new1 corresponde ao ficheiro RLE caso tenha havido esta compressao (fp_new2 corresponde ao original), 
 caso contrário corresponde ao original(fp_new2 == NULL)*/
-void decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2, int nr_blocos){
+int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2, int nr_blocos){
     unsigned char *buffer_shaf;
     char **codes, *chars, *buffer_new;
     int *tam, i = 0, nr_codes = 0, tam_bloco_new, tam_bloco_shaf;
@@ -126,21 +129,22 @@ void decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2, int
 
     while(i < nr_blocos){
         tamanhoBloco(fp_cod,&tam_bloco_new);
-        buffer_new = (char *) malloc(sizeof(char)*tam_bloco_new);
+        CheckPointer(buffer_new = (char *) malloc(sizeof(char)*tam_bloco_new));
 
         tamanhoBloco(fp_shaf,&tam_bloco_shaf);
-        buffer_shaf = (unsigned char *) malloc(sizeof(unsigned char)*tam_bloco_shaf);
+        CheckPointer(buffer_shaf = (unsigned char *) malloc(sizeof(unsigned char)*tam_bloco_shaf));
         fread(buffer_shaf, sizeof(unsigned char), tam_bloco_shaf, fp_shaf); skip_AtSign(fp_shaf); /* Fica a apontar para o tamanho do prox bloco */
         
-        analizaBloco(fp_cod,tam,chars,codes,&nr_codes);
+        CheckReturnValue(analizaBloco(fp_cod,tam,chars,codes,&nr_codes));
         quickSort(tam,chars,codes,0,nr_codes-1);
         decompressBlockSF(buffer_shaf,buffer_new,chars,codes,nr_codes,tam_bloco_new);
         fwrite(buffer_new,sizeof(char),tam_bloco_new,fp_new1);
         if(fp_new2) decompressBlockRLE(fp_new2,tam_bloco_new,buffer_new);
-        
-        free(buffer_new); free(buffer_shaf);
+
+        free(buffer_new); free(buffer_shaf); freeCodes(codes,nr_codes);
         nr_codes = 0; i++;
     }
 
     free(tam); free(chars); free(codes);
+    return 1;
 }

@@ -7,12 +7,16 @@
 #include <string.h>
 
 #define skip_AtSign(fp) fseek(fp,1,SEEK_CUR); /* Dá skip ao '@' */
+#define skip_AtSign(fp) fseek(fp,1,SEEK_CUR); /* Dá skip ao '@' */
+#define CheckPointer(x) if(!(x)) { printf("Erro: Não foi possível alocar espaço...\n"); return 0;}
+#define CheckReturnValue(x) if(!(x)) return 0; /* É usada para dar return value 0 em funções dependentes do sucesso de outras */
+#define CheckFile(fp,path) if(!(fp)) { printf("Erro: Não foi possível abrir o ficheiro (%s)...",path); return; }
 
 /*Remove n chars do path
   Exemplo: Se tivermos como inputs path = "aaa.txt.rle" e n = 4, temos como resultado path = "aaa.txt"*/
-void removeExtensao(char *path, char **path_new, int n);
+int removeExtensao(char *path, char **path_new, int n);
 
-void substituiExtensao(char *path, char **path_new, char *ext_new /*nova extensão*/, int n /*tamanho da extensao anterior*/);
+int substituiExtensao(char *path, char **path_new, char *ext_new /*nova extensão*/, int n /*tamanho da extensao anterior*/);
 
 /*Verifica se houve compressão RLE*/
 char checkRLE(FILE *fp);

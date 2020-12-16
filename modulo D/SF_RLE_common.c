@@ -5,17 +5,19 @@
 
 /********** Extensões **********/
 
-void removeExtensao(char *path, char **path_new, int n){
+int removeExtensao(char *path, char **path_new, int n){
     int i;
     for(i = 0;path[i] != '\0';i++);
     i -= n; /* nº de chars a copiar da string path */
-    *path_new = (char *) malloc(i + 1);
+    CheckPointer(*path_new = (char *) malloc(i + 1));
     strncpy(*path_new,path,i);
+    return 1;
 }
 
-void substituiExtensao(char *path, char **path_new, char *ext_new, int n){
-    removeExtensao(path,path_new,n);
+int substituiExtensao(char *path, char **path_new, char *ext_new, int n){
+    CheckReturnValue(removeExtensao(path,path_new,n));
     strcat(*path_new,ext_new);
+    return 1;
 }
 
 
