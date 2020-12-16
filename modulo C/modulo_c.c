@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define CHECK(x) if(!(x)) return -1;
+#define BREAD (1024)
 
 void ptable(unsigned char *table,int tam){
 	for(int i = 0;i < 8;i++){
@@ -15,6 +17,63 @@ void ptable(unsigned char *table,int tam){
 	}
 }
 
+void pread(int tblocos[],unsigned char* codes[],int nblocos){
+	printf("nblocos --> %d\n",nblocos);
+	for(int i = 0;i < nblocos*2;i += 2) printf("tbloco --> %d|mbloco --> %d\n",tblocos[i],tblocos[i+1]);
+	for(int i = 0;i < nblocos;i++){
+		for(int j = 0; j < 256;j++) printf("codigo '%d' --> %s\n",j,codes[i*256+j]);
+	}
+}
+
+int read1(char* path,int* tblocos[],unsigned char** codes[]){
+	int nblocos,tcode,bloco,c,ind,n,mtcode,lim;
+	unsigned char buffer[BREAD],a[64];
+	FILE *fp;
+	
+	CHECK(fp = fopen(path,"r"));
+	
+	fscanf(fp,"@%*c@%d@",&nblocos);
+	CHECK(*tblocos = malloc(sizeof(int)*nblocos*2));
+	CHECK(*codes = malloc(sizeof(unsigned char*)*nblocos*256));
+	fread(buffer,sizeof(unsigned char),BREAD,fp);
+	c = 0;
+	lim = BREAD;
+
+	for(int i = 0;i < nblocos;i++){
+		for(bloco = 0;buffer[c] != '@';c = (c+1)%BREAD)
+			bloco = bloco*10+buffer[c]-'0';
+		(*tblocos)[i*2] = bloco;
+		mtcode = 0;
+		for(int j = 0;j<256;j++){
+			ind = i * 256;
+			tcode = 2;
+			a[2] = 0; 
+			c = (c+1)%BREAD;
+ 			for(n = 8;buffer[c] != ';' && buffer[c] != '@';n--){
+ 				if(n == 0){n = 8;a[++tcode] = 0;}
+ 				a[tcode] = a[tcode] + ((buffer[c] - '0') << (n-1));
+ 				c = (c+1)%BREAD;
+			}
+			if(n != 8) tcode++;
+			a[tcode] = '\0';
+			a[1] = 8-n;
+			a[0] = tcode-2;
+			if (tcode > mtcode) mtcode = tcode;
+			(*codes)[ind+j] = malloc(sizeof(char)*tcode);
+			strcpy((*codes)[ind+j],a);
+			if (((lim+BREAD)-c)%BREAD <=272){
+				fread(buffer+lim,sizeof(unsigned char),lim%BREAD,fp);
+				fread(buffer,sizeof(unsigned char),c,fp);lim = c-1;
+			}
+		}
+		(*tblocos)[i*2+1] = mtcode;
+		c = (c+1)%BREAD;
+	}
+	fclose(fp);
+	return nblocos;
+}
+
+
 int read(char* path,int* tblocos[],unsigned char** codes[]){
 	FILE *fp;
 	char a[64],code;
@@ -22,15 +81,8 @@ int read(char* path,int* tblocos[],unsigned char** codes[]){
 
 	fp = fopen(path,"r");
 	if (!fp) return -1;
-	for(int i = 0; i < 3;i++) fgetc(fp);
+	fscanf(fp,"@%*c@%d@",&nblocos);
 
-	a[0] = fgetc(fp);
-	while(a[nblocos] != '@'){
-		nblocos++;
-		a[nblocos] = fgetc(fp);
-	}
-	a[nblocos] = '\0';
-	nblocos = atoi(a);
 	//printf("%s |%d\n",a,nblocos);
 
 	CHECK(*tblocos = malloc(sizeof(int)*nblocos*2));
@@ -38,14 +90,9 @@ int read(char* path,int* tblocos[],unsigned char** codes[]){
 	//tblocos[x+0] = tamnaho do bloco; tblocos[x+1] = o tamanho maximo dos simbolos nesse bloco  
 	for(int i = 0;i<nblocos;i++){
 		mtcode = 0;
-		n = 0;
-		a[0] = fgetc(fp);
-		while (a[n] != '@'){
-			n++;
-			a[n] = fgetc(fp);
-		}
-		a[n] = '\0';
-		n = atoi(a);
+		code = fgetc(fp);
+		for(n = 0;code != '@';code = fgetc(fp))
+			n = n*10+code-'0';
 		//printf("%s\n",a);
 		(*tblocos)[i*2] = n;
 		//printf("%d\n",i);
@@ -75,6 +122,7 @@ int read(char* path,int* tblocos[],unsigned char** codes[]){
 	fclose(fp);
 	return nblocos;
 }
+
 
 //preencher letras vs offset ---> ver qual e mais rapido
 int makeTable(unsigned char* table,unsigned char* codes[],int tam){
@@ -119,7 +167,7 @@ int encode(char *path,char  *pathcod){
 	CHECK(fp = fopen(path,"r"));
 	CHECK(fout = fopen(name,"w"));
 
-	nblocos = read(pathcod,&tblocos,&codes);
+	nblocos = read1(pathcod,&tblocos,&codes);
 	n = tblocos[2*(nblocos-1)];
 	if (n < tblocos[0]) n = tblocos[0];
 	CHECK(in = malloc(sizeof(unsigned char)*n));
@@ -132,13 +180,10 @@ int encode(char *path,char  *pathcod){
 		tam = tblocos[i*2+1] + 3;
 		CHECK(table = malloc(sizeof(unsigned char)*256*8*tam));
 		makeTable(table,codes,tam-3);
-		//ptable(table,tam);
-		printf("%d\n",in[1173]);
 
 		off = 0;
 		n = 0;
 		out[0] = 0;
-		printf("%d\n",tblocos[i*2]);
 		for(int j = 0;j<tblocos[i*2];j++){
 			line = table+(off*256*tam+in[j]*tam);
 			//printf("off->%d|n->%d\n",off,n);
@@ -155,6 +200,12 @@ int encode(char *path,char  *pathcod){
 		//putc('@',fout);
 		free(table);
 	}
+	free(in);
+	free(out);
+	free(name);
+	free(tblocos);
+	for(int i = 0;i < nblocos * 256;i++) free(codes[i]);
+	free(codes);
 	fclose(fout);
 	fclose(fp);
 }
@@ -162,8 +213,21 @@ int encode(char *path,char  *pathcod){
 
 int main(){
 	int n1,*n = NULL,tam = 1;
+	clock_t t;
 	unsigned char **c = NULL,table[256*(tam+2)*8];
 	encode("aaa.txt","aaa.txt.cod");
-
+	/*
+	t = clock();
+	n1 = read("test.cod",&n,&c);
+	t = (clock()-t)/(CLOCKS_PER_SEC/1000000);
+	printf("%.9f\n",t);
+	//pread(n,c,n1);
+	//for(int i = 0;i<10;i++)putc('\n',stdout);
+	t = clock();
+	n1 = read1("test.cod",&n,&c);
+	t = (clock()-t)/(CLOCKS_PER_SEC/1000000);
+	printf("%.9f\n",t);
+	//pread(n,c,n1);
+	*/
 	return 1;
 }
