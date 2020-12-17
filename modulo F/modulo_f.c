@@ -16,6 +16,14 @@ typedef struct blockfreq {
 
 
 
+void freeBFreq(  BFreq t){
+	BFreq r;
+	while(t!=NULL){
+		r = t->next;
+		free(t);
+		t = r;
+	}
+}
 
 
 int charLeft(FILE *fp_origin){
@@ -63,8 +71,10 @@ printf ("oi oi -> abrir ficheiro %s %d\n", fileName2, fp_Freq != NULL);
             
             for (i = 0, last = -1; i < 255; i++) {
             	
-            	if (last != pointer->freq[i]) 
-					fprintf (fp_Freq, "%d", pointer->freq[i]);
+            	if (last != pointer->freq[i]){ 
+            		fprintf (fp_Freq, "%d", pointer->freq[i]);
+            		last=pointer->freq[i];
+            	}
             	
             	if (i < 254 ) fprintf (fp_Freq, ";");
 				else fprintf (fp_Freq, "@");
@@ -77,23 +87,26 @@ printf ("oi oi -> abrir ficheiro %s %d\n", fileName2, fp_Freq != NULL);
 		printf("Can't open %s\n", fileName2);
 		exit(1);
 	}
-    
+
+printf ("oi oi -> checkpoint n1 %s %d\n", fileName2, fp_Freq != NULL);
     
     if (freqList->blockSizeRLE != 0) {
         strcpy (fileName2, fileName);
         fp_FreqRLE = fopen (fileName2,".rle.freq" "w");
-        
+printf ("oi oi -> 1\n");
         if (fp_FreqRLE != NULL){
             
             fprintf (fp_Freq, "@R@%d@", block);
-                    
+printf ("oi oi -> 2\n");    
             for (pointer = freqList; pointer != NULL; pointer = pointer->next) {
                 fprintf (fp_FreqRLE, "%d@", pointer->blockSizeRLE);
                 
                 for (i = 0, last = -1; i < 255; i++) {
             		
-					if (last != pointer->freqRLE[i]) 
+					if (last != pointer->freqRLE[i]){ 
 						fprintf (fp_FreqRLE, "%d", pointer->freqRLE[i]);
+						last = pointer->freqRLE[i];
+					}
             		
             		if (i < 254 ) fprintf (fp_FreqRLE, ";");
 					else fprintf (fp_FreqRLE, "@");
@@ -107,8 +120,9 @@ printf ("oi oi -> abrir ficheiro %s %d\n", fileName2, fp_Freq != NULL);
 			exit(1);
 		}
     }
-    
-    
+ 
+ printf ("oi oi -> checkpoint n2 %s %d\n", fileName2, fp_Freq != NULL);
+ 
     fclose(fp_FreqRLE);
     fclose(fp_Freq);
 
@@ -176,15 +190,15 @@ printf ("oi oi -> ficheiro apenas tem 1 KB a sobrar\n");
 			// caso em que se faz a compressao RLE
 			if (checkCom == 0 || block == 1){
 				
-printf ("oi oi -> comecou a tentar comprimir   checkCom = %d  block = %d\n", checkCom, block);
+printf ("oi oi -> comecou a tentar comprimir   checkCom = %d  block = %d condicao = %d %d \n", checkCom, block ,posBuff < buffSize ,posBuff < (k - block*65536));
 				rep = 1;
 				repChar = blockBuffer[0];
 				
-				for (posBuff = 1; posBuff < buffSize && posBuff < (k - block*65536); posBuff++){   // ciclo onde executa a compressao
+				for (posBuff = 1; posBuff < buffSize && posBuff < (k - (block-1)*65536); posBuff++){   // ciclo onde executa a compressao
+
 					
 					if ((repChar != blockBuffer[posBuff] && (rep > 4 || repChar == 0)) || rep >= 255){  // casos em que se aplica {0}{simbolo}{repeticoes}
-						blockRLE[posRLE++] = 0; 
-						blockRLE[posRLE++] = repChar;
+						blockRLE[posRLE++] = 0;						blockRLE[posRLE++] = repChar;
 						blockRLE[posRLE++] = rep;
 						rep = 1;
 						repChar = blockBuffer[posBuff];
@@ -219,6 +233,8 @@ printf ("oi oi -> comecou a tentar comprimir   checkCom = %d  block = %d\n", che
 							newBFreq->freqRLE[blockRLE[i]]++;
 							
 						newBFreq->blockSizeRLE = posRLE;  // colocar o tamanho do bloco com o resultado compressao
+printf ("\noi oi -> posRLE %d\n", posRLE);    
+
 					}
 					else {
 						printf("Can't open %s\n", fileName);
@@ -269,7 +285,7 @@ int main(int argc, char *argv[]){
 	
 	if (strcmp(str, "")){
 
-printf ("oi oi -> entrou direito com  str -> %s \n", str);
+printf ("oi oi -> entrou direito com  str -> %s \n\n", str);
 	
 		int nblocks;
 		
@@ -295,6 +311,7 @@ printf ("oi oi -> fim da RLEcompression\n\n");
 		    printf ("oi oi -> noice chegou ao fim\n");
 			
 			//fclose(fp_origin);
+			freeBFreq(freqList);
 		    return 0;
 		}
 	    else{
@@ -307,4 +324,5 @@ printf ("oi oi -> fim da RLEcompression\n\n");
 		printf ("Did not enter the location of the destination file\n");
 		return 1;
 	}
+
 }
