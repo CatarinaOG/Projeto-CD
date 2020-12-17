@@ -38,18 +38,23 @@ int checkCompression (float source,float result){
 }
 
 
+
+
 int freqFileBuild (BFreq freqList, int block, char *fileName) {
+printf ("oi oi -> freqFileBuild\n");
     int i, last = -1;
     BFreq pointer;
     
     FILE *fp_Freq, *fp_FreqRLE;
     
     char fileName2[30];
-    
     strcpy(fileName2,fileName);
+    
     fp_Freq = fopen (strcat (fileName2,".freq"), "w");
     
-    if (fp_Freq) {
+printf ("oi oi -> abrir ficheiro %s %d\n", fileName2, fp_Freq != NULL);
+    
+    if (fp_Freq != NULL) {
         if (freqList->freqRLE != NULL) fprintf (fp_Freq, "@R@%d@", block);
         else fprintf (fp_Freq, "@N@%d@", block);
         
@@ -78,7 +83,7 @@ int freqFileBuild (BFreq freqList, int block, char *fileName) {
         strcpy (fileName2, fileName);
         fp_FreqRLE = fopen (fileName2,".rle.freq" "w");
         
-        if (fp_FreqRLE){
+        if (fp_FreqRLE != NULL){
             
             fprintf (fp_Freq, "@R@%d@", block);
                     
@@ -88,7 +93,7 @@ int freqFileBuild (BFreq freqList, int block, char *fileName) {
                 for (i = 0, last = -1; i < 255; i++) {
             		
 					if (last != pointer->freqRLE[i]) 
-						fprintf (fp_FreqRLE, "%d", pointer->freqRLE);
+						fprintf (fp_FreqRLE, "%d", pointer->freqRLE[i]);
             		
             		if (i < 254 ) fprintf (fp_FreqRLE, ";");
 					else fprintf (fp_FreqRLE, "@");
@@ -97,11 +102,12 @@ int freqFileBuild (BFreq freqList, int block, char *fileName) {
             }
             fprintf (fp_FreqRLE, "0");
         }
+        else {
+			printf("Can't open %s\n", fileName2);
+			exit(1);
+		}
     }
-    else {
-		printf("Can't open %s\n", fileName2);
-		exit(1);
-	}
+    
     
     fclose(fp_FreqRLE);
     fclose(fp_Freq);
@@ -139,11 +145,15 @@ int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 	
 	FILE *fp_RLE;
 	
-	
 	fgets (auxBuffer, 1025, fp_origin); // carregar o primeiro KB no auxBuffer
 	
-	if (feof (fp_origin)){  // comecar a compressao
+printf ("oi oi -> declaracoes da RLEcompression    feof = %d\n", feof (fp_origin));
+	
+	if (!feof (fp_origin)){  // comecar a compressao caso tenha mais de 1 KB
 		do{	
+			
+printf ("oi oi -> ficheiro com mais de 1 KB e podera ter menos de 64 KB\n");
+			
 			block++;
 			
 			//  preparar o blockBuffer
@@ -152,19 +162,21 @@ int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 			buffSize = 65536;
 			
 			if (!feof(fp_origin)){  // caso em que e possivel que o fcheiro acabe no proximo KB
+printf ("oi oi -> ficheiro tem pelo menos 64 KB\n");
 				
 				fgets (auxBuffer, 1025, fp_origin);
 				
 				if (feof (fp_origin))  // caso acabe no proximo KB
 					strcpy (blockBuffer, auxBuffer);
 					buffSize += 1024;
+printf ("oi oi -> ficheiro apenas tem 1 KB a sobrar\n");
 			}
-			
 			
 			
 			// caso em que se faz a compressao RLE
 			if (checkCom == 0 || block == 1){
 				
+printf ("oi oi -> comecou a tentar comprimir   checkCom = %d  block = %d\n", checkCom, block);
 				rep = 1;
 				repChar = blockBuffer[0];
 				
@@ -249,12 +261,20 @@ int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 
 int main(int argc, char *argv[]){
 	
-	if (argc > 1){
+	char str[30] = "aaa.txt";
+	
+	//printf("say somthing: ");
+	//gets(str);
+	if (!argc > 1) strcpy (str, argv[1]);
+	
+	if (strcmp(str, "")){
+
+printf ("oi oi -> entrou direito com  str -> %s \n", str);
 	
 		int nblocks;
 		
 		char fileName[30];
-		strcpy (fileName, argv[1]);
+		strcpy (fileName, str);
  		
 		FILE *fp_origin;
 		
@@ -264,15 +284,17 @@ int main(int argc, char *argv[]){
 	    	
 	    	BFreq freqList;
 	    	
+printf ("oi oi -> inicio da RLEcompression\n");
 	    	nblocks = RLEcompression(fp_origin, &freqList, strcat(fileName,".rle"));
-			strcpy (fileName, argv[1]); // super importante pois a string f ficou danificada ao ser usada!!!!   ->    cenas.txt -> cenas.txt.rle
+printf ("oi oi -> fim da RLEcompression\n\n");
+			strcpy (fileName, str); // super importante pois a string f ficou danificada ao ser usada!!!!   ->    cenas.txt -> cenas.txt.rle
 	    	
 	    	// criar o ficheiro com as frequencias dos caracteres no ficheiro original (?realizado independentemente da situa?o)
 			freqFileBuild (freqList, nblocks, fileName);
 			
-		    
+		    printf ("oi oi -> noice chegou ao fim\n");
 			
-			fclose(fp_origin);
+			//fclose(fp_origin);
 		    return 0;
 		}
 	    else{
