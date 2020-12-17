@@ -8,10 +8,10 @@
 
 /************** SHANNON-FANO ***************/
 
-void initDecompressRLE(char *path_rle);
+int initDecompressRLE(char *path_rle);
 
 /* modo == '0', não fazer descompressão RLE */
-void decompressSF_RLE(char modo, char *path_shaf);
+int decompressSF_RLE(char modo, char *path_shaf);
 
 void moduloD(int argc, char *argv[]);
 

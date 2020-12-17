@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include "SF_RLE_common.h"
 
+extern int *tam_antes;
+extern int *tam_depois;
+extern int index_bloco;
+extern char saveBlockLength;
+
 /********** Auxiliares **********/
 
 void mudaInputType(char *inputType){
@@ -15,14 +20,14 @@ void print(FILE *fp, char valor_rle, int n_rep){
         fputc(valor_rle,fp); /*(ASCII->Valor)*/
 }
 
-int bufferSizesRLE(FILE *fp, int *nr_blocos, int *buffer_sizes_rle){
+int bufferSizesRLE(FILE *fp, int *nr_blocos, int **buffer_sizes_rle){
     char ch, inputType = 'C';
     int _bloco = 0;
     
     fseek(fp,3,SEEK_SET); /* Skip @<R|N>@ */
     fscanf(fp,"%d",nr_blocos); 
     
-    CheckPointer(buffer_sizes_rle = (int *) malloc((*nr_blocos)*sizeof(int)));
+    CheckPointer(*buffer_sizes_rle = (int *) malloc((*nr_blocos)*sizeof(int)));
 
     while(1){
         ch = (char) fgetc(fp);
@@ -31,7 +36,7 @@ int bufferSizesRLE(FILE *fp, int *nr_blocos, int *buffer_sizes_rle){
             if(inputType == 'T'){
                 if((char) fgetc(fp) == '0') return 1;
                 fseek(fp,-1,SEEK_CUR); /* Volta uma posição para trás, para conseguir ler o inteiro na totalidade */ 
-                fscanf(fp,"%d",&(buffer_sizes_rle[_bloco]));
+                fscanf(fp,"%d",&((*buffer_sizes_rle)[_bloco]));
                 _bloco++;
             }
             else fseek(fp,256,SEEK_CUR);
@@ -43,15 +48,22 @@ int bufferSizesRLE(FILE *fp, int *nr_blocos, int *buffer_sizes_rle){
 
 void decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle){
     char ch;
-    int _buffer, nr_rep;
+    int _buffer, nr_rep, tam_bloco_new = 0;
+
     for(_buffer = 0; _buffer < tam_buffer_rle ; _buffer++){
-            if(buffer_rle[_buffer] == '\0'){
-                ch     = buffer_rle[++_buffer];
-                nr_rep = (int) buffer_rle[++_buffer];
-                print(fp_original,ch,nr_rep);
-            }
-            else fputc(buffer_rle[_buffer],fp_original);
+        if(buffer_rle[_buffer] == '\0'){
+            ch     = buffer_rle[++_buffer];
+            nr_rep = (int) buffer_rle[++_buffer];
+            print(fp_original,ch,nr_rep);
+            tam_bloco_new += nr_rep;
+        }
+        else {fputc(buffer_rle[_buffer],fp_original);
+              tam_bloco_new++;
+        }
     }
+
+    if(saveBlockLength == 'Y') gravarTamanhoBloco(tam_buffer_rle,&tam_antes,'A');
+    gravarTamanhoBloco(tam_bloco_new,&tam_depois,'D');
 }
 
 int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *nr_blocos){

@@ -10,7 +10,7 @@
 #define skip_AtSign(fp) fseek(fp,1,SEEK_CUR); /* Dá skip ao '@' */
 #define CheckPointer(x) if(!(x)) { printf("Erro: Não foi possível alocar espaço...\n"); return 0;}
 #define CheckReturnValue(x) if(!(x)) return 0; /* É usada para dar return value 0 em funções dependentes do sucesso de outras */
-#define CheckFile(fp,path) if(!(fp)) { printf("Erro: Não foi possível abrir o ficheiro (%s)...",path); return; }
+#define CheckFile(fp,path) if(!(fp)) { printf("Erro: Não foi possível abrir o ficheiro (%s)...",path); return 0; }
 
 /*Remove n chars do path
   Exemplo: Se tivermos como inputs path = "aaa.txt.rle" e n = 4, temos como resultado path = "aaa.txt"*/
@@ -28,5 +28,7 @@ int nrBlocos(FILE *fp);
 void tamanhoBloco(FILE *fp, int *tam_bloco);
 
 void skipNrBlocosShaf(FILE *fp);
+
+int gravarTamanhoBloco(int tam_bloco, int **array_tam_bloco, char qual);
 
 #endif
