@@ -1,11 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
-#define CHECK(x) if(!(x)) return -1;
-#define BREAD (1024)
-
+#include "modulo_c.h"
+ 
 void ptable(unsigned char *table,int tam){
 	for(int i = 0;i < 8;i++){
 		for(int j = 0;j < 256;j++){
@@ -36,7 +30,7 @@ void print(char* name,int nblocos,double time,int *tblocos,int *cblocos){
 		taxa += cblocos[i]/tblocos[i*2];
 	}
 	printf("Taxa de compressão global: %.0f%\n",taxa/nblocos);
-	printf("Tempo de execução do módulo (milissegundos): %d\n",time);
+	printf("Tempo de execução do módulo (milissegundos): %f\n",time);
 	printf("Ficheiro gerado: %s\n",name);
 }
 
