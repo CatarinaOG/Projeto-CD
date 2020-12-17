@@ -5,85 +5,95 @@
 #include <string.h>
 #include <time.h>
 
+/* A variável "saveBlockLength" é usada para saber quando é que deve gravar o tamanho dos blocos, por exemplo 
+quando é necessário fazer ambas as descompressões não queremos guardar os valores da descompressao RLE */
+char *path_final = NULL, saveBlockLength = 'Y'; 
+int Nr_de_blocos = 0, index_bloco = 0, *tam_antes = NULL, *tam_depois = NULL;
+float tempo = 0;
+
 /********** FUNÇÕES PRINCIPAIS **********/
 
-void printModuloD(int nr_blocos, int *tam_antes, int *tam_depois, float time, char *path){
-    int i;
-    printf("Alexandre Martins, a93315, MIEI/CD\n");
+void printModuloD(){
+    int i = 0;
+    printf("\nAlexandre Martins, a93315, MIEI/CD\n");
     printf("Gabriela Prata, a93288, MIEI/CD\n");
     printf("Data: 16-dez-2020\nMódulo: d (descodificação dum ficheiro shaf)\n");
-    printf("Número de blocos: %d\n",nr_blocos);
-    for(;i < nr_blocos;i++)
-        printf("Tamanho antes/depois do ficheiro gerado (bloco %d): %d/%d",i,tam_antes[i],tam_depois[i]);
-    printf("Tempo de execução do módulo (milissegundos): %f",time);
-    printf("Ficheiro gerado: %s",path);
+    printf("Número de blocos: %d\n",Nr_de_blocos);
+    for(;i < Nr_de_blocos; i++)
+        printf("Tamanho antes/depois do ficheiro gerado (bloco %d): %d/%d\n",i,tam_antes[i],tam_depois[i]);
+    printf("Tempo de execução do módulo (milissegundos): %f\n",tempo);
+    printf("Ficheiro gerado: %s\n\n",path_final);
 } 
 
-void initDecompressRLE(char *path_rle){
-    int nr_blocos = 0, *buffer_sizes_rle;
+int initDecompressRLE(char *path_rle){
+    int nr_blocos = 0, *buffer_sizes_rle, r;
     char *path_original, *path_freq;
-    FILE *fp_rle      = fopen(path_rle,"rb"),
-         *fp_freq     = fopen(path_freq,"r"),
-         *fp_original = fopen(path_original,"w");
-
-    CheckFile(fp_rle, path_rle);
-    CheckFile(fp_freq, path_freq);
-    CheckFile(fp_original, path_original);
 
     removeExtensao(path_rle,&path_original,4);
     substituiExtensao(path_rle,&path_freq,".freq",0);
 
-    bufferSizesRLE(fp_freq, &nr_blocos, buffer_sizes_rle);
-    decompressRLE(fp_rle, fp_original, buffer_sizes_rle, &nr_blocos);
+    FILE *fp_rle      = fopen(path_rle,"rb");     CheckFile(fp_rle, path_rle);
+    FILE *fp_freq     = fopen(path_freq,"r");     CheckFile(fp_freq, path_freq);
+    FILE *fp_original = fopen(path_original,"w"); CheckFile(fp_original, path_original);
 
-    fclose(fp_rle); fclose(fp_original); free(path_original); free(path_freq);
+    bufferSizesRLE(fp_freq, &nr_blocos, &buffer_sizes_rle);
+    r = decompressRLE(fp_rle, fp_original, buffer_sizes_rle, &nr_blocos);
+
+    path_final   = path_original;
+    Nr_de_blocos = nr_blocos;
+
+    fclose(fp_rle); fclose(fp_original); free(path_freq);
+    return r;
 }
 
-void decompressSF_RLE(char modo, char *path_shaf){
-    char *path_new; removeExtensao(path_shaf,&path_new,5);
-    char *path_cod; substituiExtensao(path_shaf,&path_cod,".cod",5);
-    FILE *fp_shaf  = fopen(path_shaf,"rb"), 
-         *fp_cod   = fopen(path_cod,"r"),
-         *fp_new   = fopen(path_new,"wb+");
-
-    CheckFile(fp_shaf, path_shaf);
-    CheckFile(fp_cod, path_cod);
-    CheckFile(fp_new, path_new);
+int decompressSF_RLE(char modo, char *path_shaf){
+    int r; char *path_new, *path_cod;
+    removeExtensao(path_shaf,&path_new,5);
+    substituiExtensao(path_shaf,&path_cod,".cod",5);
+    FILE *fp_shaf  = fopen(path_shaf,"rb"); CheckFile(fp_shaf, path_shaf);
+    FILE *fp_cod   = fopen(path_cod,"r");   CheckFile(fp_cod, path_cod);
+    FILE *fp_new   = fopen(path_new,"wb+"); CheckFile(fp_new, path_new);
 
     char check_RLE = checkRLE(fp_cod);
-    int  nr_blocos = nrBlocos(fp_cod);
+    int nr_blocos = nrBlocos(fp_cod);
 
-    if(modo == '0' || check_RLE == 'N') decompressSF(fp_shaf,fp_cod,fp_new,NULL,nr_blocos);
+    if(modo == '0' || check_RLE == 'N') {
+        r = decompressSF(fp_shaf,fp_cod,fp_new,NULL,nr_blocos);
+        path_final = path_new;
+    }
     else{
         char *path_original; removeExtensao(path_new,&path_original,4);
         FILE *fp_original = fopen(path_original,"wb");
         CheckFile(fp_original, path_original);
-        decompressSF(fp_shaf,fp_cod,fp_new,fp_original,nr_blocos);
-        fclose(fp_original); free(path_original);
+        r = decompressSF(fp_shaf,fp_cod,fp_new,fp_original,nr_blocos);
+        path_final = path_original;
+        fclose(fp_original); free(path_new); 
     }
 
-    fclose(fp_shaf); fclose(fp_cod); fclose(fp_new); free(path_new); free(path_cod);
+    Nr_de_blocos = nr_blocos;
+    fclose(fp_shaf); fclose(fp_cod); fclose(fp_new); free(path_cod);
+    return r;
 }
 
 /********** FUNÇÂO CHAMADORA **********/
 
 void moduloD(int argc, char *argv[]){
-    int nr_blocos, *tam_antes, *tam_depois;
-    char *path_new;
+    int r;
 
     clock_t startTime = clock();
-    
-    if(argc == 4) decompressSF_RLE('1',argv[1]);
+
+    if(argc == 4) r = decompressSF_RLE('1',argv[1]);
     else{/*Caso haja mais do que 5 argumentos, os últimos sáo ignorados"*/
-        if(!strcmp(argv[4],"s")) decompressSF_RLE('0',argv[1]);
-        else if(!strcmp(argv[4],"r")) initDecompressRLE(argv[1]);
-        else printf("Comando inválido!\n");
+        if(!strcmp(argv[4],"s")) r = decompressSF_RLE('0',argv[1]);
+        else if(!strcmp(argv[4],"r")) r = initDecompressRLE(argv[1]);
+        else {printf("Comando inválido!\n"); return;}
     }
     
     clock_t finishTime = clock();
-    double time = (double)(finishTime - startTime) * 1000 / CLOCKS_PER_SEC;
-    printModuloD(nr_blocos,tam_antes,tam_depois,time,path_new);
-    free(tam_antes); free(tam_depois); free(path_new);
+    tempo = (double)(finishTime - startTime) * 1000 / CLOCKS_PER_SEC;
+    if(r) printModuloD();
+
+    free(tam_antes); free(tam_depois); free(path_final);
 }
 
 int main(int argc, char *argv[]) {
