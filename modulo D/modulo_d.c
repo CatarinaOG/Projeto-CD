@@ -1,9 +1,4 @@
-#include "decompressSF.h"
-#include "decompressRLE.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include "modulo_d.h"
 
 /* A variável "saveBlockLength" é usada para saber quando é que deve gravar o tamanho dos blocos, por exemplo 
 quando é necessário fazer ambas as descompressões não queremos guardar os valores da descompressao RLE */
@@ -92,7 +87,6 @@ int decompressSF_RLE(char modo, char *path_shaf){
 
 void moduloD(int argc, char *argv[]){
     int r;
-
     clock_t startTime = clock();
 
     if(argc == 4) r = decompressSF_RLE('1',argv[1]);

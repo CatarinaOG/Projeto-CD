@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "SF_RLE_common.h"
+#include "decompressRLE.h"
 
 extern int *tam_antes;
 extern int *tam_depois;
@@ -53,11 +51,12 @@ int decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle){
 
     for(_buffer = 0; _buffer < tam_buffer_rle; _buffer++){
         if(buffer_rle[_buffer] == '\0'){
-            aux = tam_buffer_rle - _buffer;
-            if(aux <= 2) break;
-
-            ch     = buffer_rle[++_buffer];
-            nr_rep = (int) buffer_rle[++_buffer];
+            if((aux = tam_buffer_rle - _buffer) <= 2) {
+                tam_buffer_rle -= aux;
+                break;
+            }
+            ch      = buffer_rle[++_buffer];
+            nr_rep  = (int) buffer_rle[++_buffer];
             print(fp_original,ch,nr_rep);
             tam_bloco_new += nr_rep;
         }
@@ -66,12 +65,10 @@ int decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle){
         }
     }
 
-    if(aux<=2) tam_buffer_rle -= aux;
-    else aux = 0; /* aux = 0 para que não o fp_rle nao ser alterado */ 
-
     if(saveBlockLength == 'Y') gravarTamanhoBloco(tam_buffer_rle,&tam_antes,'A');
     gravarTamanhoBloco(tam_bloco_new,&tam_depois,'D');
 
+    if(aux > 2) aux = 0; /* aux = 0 para o fp_rle nao ser alterado */ 
     return -aux;
 }
 

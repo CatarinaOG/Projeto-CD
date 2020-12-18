@@ -1,6 +1,8 @@
 #ifndef MODULO_D_MODULO_D_H
 #define MODULO_D_MODULO_D_H
 #include "modulo_d.h"
+#include "decompressSF.h"
+#include "decompressRLE.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

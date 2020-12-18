@@ -1,9 +1,4 @@
-#include "SF_RLE_common.h"
-#include "decompressRLE.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include "decompressSF.h"
 
 extern int *tam_antes;
 extern int *tam_depois;
