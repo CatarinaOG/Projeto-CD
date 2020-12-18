@@ -46,12 +46,16 @@ int bufferSizesRLE(FILE *fp, int *nr_blocos, int **buffer_sizes_rle){
 
 /********** RLE **********/
 
-void decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle){
+/* Retorna número de posições a retroceder no ficheiro */
+int decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle){
     char ch;
-    int _buffer, nr_rep, tam_bloco_new = 0;
+    int _buffer, nr_rep, tam_bloco_new = 0, aux;
 
-    for(_buffer = 0; _buffer < tam_buffer_rle ; _buffer++){
+    for(_buffer = 0; _buffer < tam_buffer_rle; _buffer++){
         if(buffer_rle[_buffer] == '\0'){
+            aux = tam_buffer_rle - _buffer;
+            if(aux <= 2) break;
+
             ch     = buffer_rle[++_buffer];
             nr_rep = (int) buffer_rle[++_buffer];
             print(fp_original,ch,nr_rep);
@@ -62,18 +66,37 @@ void decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle)
         }
     }
 
+    if(aux<=2) tam_buffer_rle -= aux;
+    else aux = 0; /* aux = 0 para que não o fp_rle nao ser alterado */ 
+
     if(saveBlockLength == 'Y') gravarTamanhoBloco(tam_buffer_rle,&tam_antes,'A');
     gravarTamanhoBloco(tam_bloco_new,&tam_depois,'D');
+
+    return -aux;
 }
 
-int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *nr_blocos){
-    int _bloco,  tam_bloco;
+/* modo == 'L' lê ficheiro .freq;  modo == 'N' usa tamanho 
+definido pelo utilizador passado na variavel *buffer_sizes_rle */
+int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *nr_blocos, char modo){
+    int tam_bloco;
     char *buffer_rle;
-    for(_bloco = 0; _bloco < (*nr_blocos); _bloco++){
-        tam_bloco = buffer_sizes_rle[_bloco];
+    if(modo == 'L'){
+        int _bloco;
+        for(_bloco = 0; _bloco < (*nr_blocos); _bloco++){
+            tam_bloco = buffer_sizes_rle[_bloco];
+            CheckPointer(buffer_rle = (char *) malloc(sizeof(char)*tam_bloco));
+            fread(buffer_rle, sizeof(char), tam_bloco, fp_rle);
+            decompressBlockRLE(fp_original,tam_bloco,buffer_rle);
+            free(buffer_rle);
+        }
+    }else{
+        tam_bloco = *buffer_sizes_rle; /* Necessária para entrar no ciclo */
         CheckPointer(buffer_rle = (char *) malloc(sizeof(char)*tam_bloco));
-        fread(buffer_rle, sizeof(char), tam_bloco, fp_rle);
-        decompressBlockRLE(fp_original,tam_bloco,buffer_rle);
+        while(tam_bloco == *buffer_sizes_rle){
+            tam_bloco = fread(buffer_rle, sizeof(char), tam_bloco, fp_rle);
+            fseek(fp_rle , decompressBlockRLE(fp_original,tam_bloco,buffer_rle) , SEEK_CUR);
+            (*nr_blocos)++;
+        }
         free(buffer_rle);
     }
     return 1;

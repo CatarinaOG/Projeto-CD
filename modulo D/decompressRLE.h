@@ -20,6 +20,6 @@ int bufferSizesRLE(FILE *fp, int *nr_blocos, int **buffer_sizes_rle);
 void decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle);
 
 /* Faz descompressão RLE (Cria um novo ficheiro) */
-int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *nr_blocos);
+int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *nr_blocos, char modo);
 
 #endif

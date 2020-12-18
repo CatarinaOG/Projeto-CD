@@ -25,24 +25,37 @@ void printModuloD(){
     printf("Ficheiro gerado: %s\n\n",path_final);
 } 
 
-int initDecompressRLE(char *path_rle){
+/* modo == 'L' lê ficheiro .freq;  modo == 'N' usa tamanho 
+definido pelo utilizador passado na variavel *buffer_sizes_rle */
+int initDecompressRLE(char *path_rle, char modo, int tam_bloco_input){
     int nr_blocos = 0, *buffer_sizes_rle, r;
-    char *path_original, *path_freq;
+    char *path_original;
 
     removeExtensao(path_rle,&path_original,4);
-    substituiExtensao(path_rle,&path_freq,".freq",0);
 
     FILE *fp_rle      = fopen(path_rle,"rb");     CheckFile(fp_rle, path_rle);
-    FILE *fp_freq     = fopen(path_freq,"r");     CheckFile(fp_freq, path_freq);
     FILE *fp_original = fopen(path_original,"w"); CheckFile(fp_original, path_original);
 
-    bufferSizesRLE(fp_freq, &nr_blocos, &buffer_sizes_rle);
-    r = decompressRLE(fp_rle, fp_original, buffer_sizes_rle, &nr_blocos);
+    if(modo == 'L'){
+        char *path_freq; 
+        substituiExtensao(path_rle,&path_freq,".freq",0);
+        FILE *fp_freq = fopen(path_freq,"r"); 
+        CheckFile(fp_freq, path_freq);
+        bufferSizesRLE(fp_freq, &nr_blocos, &buffer_sizes_rle);
+        free(path_freq); 
+        fclose(fp_freq);
+    }
+    else{
+        buffer_sizes_rle  = (int *) malloc(sizeof(int));
+        *buffer_sizes_rle = tam_bloco_input;
+    }
+    
+    r = decompressRLE(fp_rle, fp_original, buffer_sizes_rle, &nr_blocos, modo);
 
     path_final   = path_original;
     Nr_de_blocos = nr_blocos;
 
-    fclose(fp_rle); fclose(fp_original); free(path_freq);
+    fclose(fp_rle); fclose(fp_original); free(buffer_sizes_rle);
     return r;
 }
 
@@ -83,12 +96,18 @@ void moduloD(int argc, char *argv[]){
     clock_t startTime = clock();
 
     if(argc == 4) r = decompressSF_RLE('1',argv[1]);
-    else{/*Caso haja mais do que 5 argumentos, os últimos sáo ignorados"*/
+    else if(argc == 5){ 
         if(!strcmp(argv[4],"s")) r = decompressSF_RLE('0',argv[1]);
-        else if(!strcmp(argv[4],"r")) r = initDecompressRLE(argv[1]);
+        else if(!strcmp(argv[4],"r")) r = initDecompressRLE(argv[1],'L',0);
         else {printf("Comando inválido!\n"); return;}
     }
-    
+    else if(argc == 7 && !strcmp(argv[4],"r") && !strcmp(argv[5],"b")){ /* Caso haja mais do que 7 argumentos, os últimos sáo ignorados */
+        int tamanho_blocos = atoi(argv[6]);
+        if (tamanho_blocos == 0){printf("Comando inválido!\n"); return;}
+        r = initDecompressRLE(argv[1],'N',tamanho_blocos);
+    }
+    else {printf("Comando inválido!\n"); return;}
+
     clock_t finishTime = clock();
     tempo = (double)(finishTime - startTime) * 1000 / CLOCKS_PER_SEC;
     if(r) printModuloD();
