@@ -8,7 +8,7 @@
 
 /************** SHANNON-FANO ***************/
 
-int initDecompressRLE(char *path_rle);
+int initDecompressRLE(char *path_rle, char modo, int tam_bloco_input);
 
 /* modo == '0', não fazer descompressão RLE */
 int decompressSF_RLE(char modo, char *path_shaf);
