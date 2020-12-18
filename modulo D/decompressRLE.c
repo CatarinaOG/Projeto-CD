@@ -1,5 +1,6 @@
 #include "decompressRLE.h"
 
+extern int nr_blocos;
 extern int *tam_antes;
 extern int *tam_depois;
 extern int index_bloco;
@@ -18,14 +19,14 @@ void print(FILE *fp, char valor_rle, int n_rep){
         fputc(valor_rle,fp); /*(ASCII->Valor)*/
 }
 
-int bufferSizesRLE(FILE *fp, int *nr_blocos, int **buffer_sizes_rle){
+int bufferSizesRLE(FILE *fp, int **buffer_sizes_rle){
     char ch, inputType = 'C';
     int _bloco = 0;
     
     fseek(fp,3,SEEK_SET); /* Skip @<R|N>@ */
-    fscanf(fp,"%d",nr_blocos); 
+    fscanf(fp,"%d",&nr_blocos); 
     
-    CheckPointer(*buffer_sizes_rle = (int *) malloc((*nr_blocos)*sizeof(int)));
+    CheckPointer(*buffer_sizes_rle = (int *) malloc(nr_blocos*sizeof(int)));
 
     while(1){
         ch = (char) fgetc(fp);
@@ -74,12 +75,12 @@ int decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle){
 
 /* modo == 'L' lê ficheiro .freq;  modo == 'N' usa tamanho 
 definido pelo utilizador passado na variavel *buffer_sizes_rle */
-int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *nr_blocos, char modo){
+int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, char modo){
     int tam_bloco;
     char *buffer_rle;
     if(modo == 'L'){
         int _bloco;
-        for(_bloco = 0; _bloco < (*nr_blocos); _bloco++){
+        for(_bloco = 0; _bloco < nr_blocos; _bloco++){
             tam_bloco = buffer_sizes_rle[_bloco];
             CheckPointer(buffer_rle = (char *) malloc(sizeof(char)*tam_bloco));
             fread(buffer_rle, sizeof(char), tam_bloco, fp_rle);
@@ -92,7 +93,7 @@ int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *n
         while(tam_bloco == *buffer_sizes_rle){
             tam_bloco = fread(buffer_rle, sizeof(char), tam_bloco, fp_rle);
             fseek(fp_rle , decompressBlockRLE(fp_original,tam_bloco,buffer_rle) , SEEK_CUR);
-            (*nr_blocos)++;
+            nr_blocos++;
         }
         free(buffer_rle);
     }

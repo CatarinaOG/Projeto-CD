@@ -1,5 +1,6 @@
 #include "decompressSF.h"
 
+extern int nr_blocos;
 extern int *tam_antes;
 extern int *tam_depois;
 extern int index_bloco;
@@ -120,7 +121,7 @@ void decompressBlockSF(unsigned char *buffer_shaf, char *buffer_new, char *chars
 
 /* fp_new1 corresponde ao ficheiro RLE caso tenha havido esta compressao (fp_new2 corresponde ao original), 
 caso contrário corresponde ao original(fp_new2 == NULL) */
-int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2, int nr_blocos){
+int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2){
     unsigned char *buffer_shaf;
     char **codes, *chars, *buffer_new;
     int *tam, i = 0, nr_codes = 0, tam_bloco_new, tam_bloco_shaf;

@@ -3,7 +3,7 @@
 /* A variável "saveBlockLength" é usada para saber quando é que deve gravar o tamanho dos blocos, por exemplo 
 quando é necessário fazer ambas as descompressões não queremos guardar os valores da descompressao RLE */
 char *path_final = NULL, saveBlockLength = 'Y'; 
-int Nr_de_blocos = 0, index_bloco = 0, *tam_antes = NULL, *tam_depois = NULL;
+int nr_blocos = 0, index_bloco = 0, *tam_antes = NULL, *tam_depois = NULL;
 float tempo = 0;
 
 /********** FUNÇÕES PRINCIPAIS **********/
@@ -13,8 +13,8 @@ void printModuloD(){
     printf("\nAlexandre Martins, a93315, MIEI/CD\n");
     printf("Gabriela Prata, a93288, MIEI/CD\n");
     printf("Data: 16-dez-2020\nMódulo: d (descodificação dum ficheiro shaf)\n");
-    printf("Número de blocos: %d\n",Nr_de_blocos);
-    for(;i < Nr_de_blocos; i++)
+    printf("Número de blocos: %d\n",nr_blocos);
+    for(;i < nr_blocos; i++)
         printf("Tamanho antes/depois do ficheiro gerado (bloco %d): %d/%d\n",i,tam_antes[i],tam_depois[i]);
     printf("Tempo de execução do módulo (milissegundos): %f\n",tempo);
     printf("Ficheiro gerado: %s\n\n",path_final);
@@ -23,7 +23,7 @@ void printModuloD(){
 /* modo == 'L' lê ficheiro .freq;  modo == 'N' usa tamanho 
 definido pelo utilizador passado na variavel *buffer_sizes_rle */
 int initDecompressRLE(char *path_rle, char modo, int tam_bloco_input){
-    int nr_blocos = 0, *buffer_sizes_rle, r;
+    int  *buffer_sizes_rle, r;
     char *path_original;
 
     removeExtensao(path_rle,&path_original,4);
@@ -36,7 +36,7 @@ int initDecompressRLE(char *path_rle, char modo, int tam_bloco_input){
         substituiExtensao(path_rle,&path_freq,".freq",0);
         FILE *fp_freq = fopen(path_freq,"r"); 
         CheckFile(fp_freq, path_freq);
-        bufferSizesRLE(fp_freq, &nr_blocos, &buffer_sizes_rle);
+        bufferSizesRLE(fp_freq,&buffer_sizes_rle);
         free(path_freq); 
         fclose(fp_freq);
     }
@@ -45,10 +45,9 @@ int initDecompressRLE(char *path_rle, char modo, int tam_bloco_input){
         *buffer_sizes_rle = tam_bloco_input;
     }
     
-    r = decompressRLE(fp_rle, fp_original, buffer_sizes_rle, &nr_blocos, modo);
+    r = decompressRLE(fp_rle, fp_original, buffer_sizes_rle, modo);
 
     path_final   = path_original;
-    Nr_de_blocos = nr_blocos;
 
     fclose(fp_rle); fclose(fp_original); free(buffer_sizes_rle);
     return r;
@@ -63,22 +62,21 @@ int decompressSF_RLE(char modo, char *path_shaf){
     FILE *fp_new   = fopen(path_new,"wb+"); CheckFile(fp_new, path_new);
 
     char check_RLE = checkRLE(fp_cod);
-    int nr_blocos = nrBlocos(fp_cod);
+    nr_blocos = nrBlocos(fp_cod);
 
     if(modo == '0' || check_RLE == 'N') {
-        r = decompressSF(fp_shaf,fp_cod,fp_new,NULL,nr_blocos);
+        r = decompressSF(fp_shaf,fp_cod,fp_new,NULL);
         path_final = path_new;
     }
     else{
         char *path_original; removeExtensao(path_new,&path_original,4);
         FILE *fp_original = fopen(path_original,"wb");
         CheckFile(fp_original, path_original);
-        r = decompressSF(fp_shaf,fp_cod,fp_new,fp_original,nr_blocos);
+        r = decompressSF(fp_shaf,fp_cod,fp_new,fp_original);
         path_final = path_original;
         fclose(fp_original); free(path_new); 
     }
 
-    Nr_de_blocos = nr_blocos;
     fclose(fp_shaf); fclose(fp_cod); fclose(fp_new); free(path_cod);
     return r;
 }

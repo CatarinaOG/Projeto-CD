@@ -32,11 +32,11 @@ char checkRLE(FILE *fp){
 }
 
 int nrBlocos(FILE *fp){
-    int nr_blocos;
+    int Nr_blocos;
     skip_AtSign(fp);
-    fscanf(fp,"%d",&nr_blocos);
+    fscanf(fp,"%d",&Nr_blocos);
     skip_AtSign(fp);
-    return nr_blocos;
+    return Nr_blocos;
 }
 
 void tamanhoBloco(FILE *fp, int *tam_bloco){
