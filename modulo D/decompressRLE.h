@@ -1,10 +1,10 @@
 #ifndef DECOMPRESS_RLE
 #define DECOMPRESS_RLE
 
+#include "decompressRLE.h"
+#include "SF_RLE_common.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "SF_RLE_common.h"
-
 
 /*'C' representa que passará a ler as sequencias
     de bits que representam os diversos chars
@@ -15,11 +15,11 @@ void mudaInputType(char *inputType);
 void print(FILE *fp, char valor_rle, int n_rep);
 
 /* Lê ficheiro .rle.freq e obtem os diversos tamanhos dos blocos */
-int bufferSizesRLE(FILE *fp, int *nr_blocos, int *buffer_sizes_rle);
+int bufferSizesRLE(FILE *fp, int **buffer_sizes_rle);
 
-void decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle);
+int decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle);
 
 /* Faz descompressão RLE (Cria um novo ficheiro) */
-int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, int *nr_blocos);
+int decompressRLE(FILE *fp_rle, FILE *fp_original, int *buffer_sizes_rle, char modo);
 
 #endif

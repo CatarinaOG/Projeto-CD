@@ -1,9 +1,10 @@
-#include "SF_RLE_common.h"
-#include "decompressRLE.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include "decompressSF.h"
+
+extern int nr_blocos;
+extern int *tam_antes;
+extern int *tam_depois;
+extern int index_bloco;
+extern char saveBlockLength;
 
 /********** Análise do Bloco de codificações **********/
 
@@ -118,12 +119,13 @@ void decompressBlockSF(unsigned char *buffer_shaf, char *buffer_new, char *chars
     }
 }
 
-/*fp_new1 corresponde ao ficheiro RLE caso tenha havido esta compressao (fp_new2 corresponde ao original), 
-caso contrário corresponde ao original(fp_new2 == NULL)*/
-int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2, int nr_blocos){
+/* fp_new1 corresponde ao ficheiro RLE caso tenha havido esta compressao (fp_new2 corresponde ao original), 
+caso contrário corresponde ao original(fp_new2 == NULL) */
+int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2){
     unsigned char *buffer_shaf;
     char **codes, *chars, *buffer_new;
     int *tam, i = 0, nr_codes = 0, tam_bloco_new, tam_bloco_shaf;
+    saveBlockLength = 'N';
     inicializa_arr(&tam, &chars, &codes, 256);     /*alterar para 16 caso consiga pôr o realloc a funcionar */
     skipNrBlocosShaf(fp_shaf);
 
@@ -132,14 +134,16 @@ int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2, int 
         CheckPointer(buffer_new = (char *) malloc(sizeof(char)*tam_bloco_new));
 
         tamanhoBloco(fp_shaf,&tam_bloco_shaf);
+        gravarTamanhoBloco(tam_bloco_shaf,&tam_antes,'A');
         CheckPointer(buffer_shaf = (unsigned char *) malloc(sizeof(unsigned char)*tam_bloco_shaf));
         fread(buffer_shaf, sizeof(unsigned char), tam_bloco_shaf, fp_shaf); skip_AtSign(fp_shaf); /* Fica a apontar para o tamanho do prox bloco */
         
         CheckReturnValue(analizaBloco(fp_cod,tam,chars,codes,&nr_codes));
         quickSort(tam,chars,codes,0,nr_codes-1);
         decompressBlockSF(buffer_shaf,buffer_new,chars,codes,nr_codes,tam_bloco_new);
-        fwrite(buffer_new,sizeof(char),tam_bloco_new,fp_new1);
+        fwrite(buffer_new,sizeof(char),tam_bloco_new,fp_new1);        
         if(fp_new2) decompressBlockRLE(fp_new2,tam_bloco_new,buffer_new);
+        else gravarTamanhoBloco(tam_bloco_new,&tam_depois,'D');
 
         free(buffer_new); free(buffer_shaf); freeCodes(codes,nr_codes);
         nr_codes = 0; i++;

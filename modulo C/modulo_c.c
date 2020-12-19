@@ -19,17 +19,17 @@ void pread(int tblocos[],unsigned char* codes[],int nblocos){
 	}
 }
 
-void print(char* name,int nblocos,double time,int *tblocos,int *cblocos){
-	double taxa = 0;
+void print(char* name,int nblocos,float time,int *tblocos,int *cblocos){
+	float taxa = 0;
 
 	printf("Gonçalo Santos, a93279,Tiago Carneiro, a93207, MIEI/CD,\n");
 	printf("Módulo: c (codificação dum ficheiro de símbolos)\n");
 	printf("Número de blocos: %d\n",nblocos);
 	for(int i = 0;i < nblocos; i++){
 		printf("Tamanho antes/depois & taxa de Compressão (bloco %d): %d/%d\n",i+1,tblocos[i*2],cblocos[i]);
-		taxa += cblocos[i]/tblocos[i*2];
+		taxa += cblocos[i]/tblocos[i*2]*100;
 	}
-	printf("Taxa de compressão global: %.0f%\n",taxa/nblocos);
+	printf("Taxa de compressão global: %.0f%\n",(taxa/nblocos));
 	printf("Tempo de execução do módulo (milissegundos): %f\n",time);
 	printf("Ficheiro gerado: %s\n",name);
 }
@@ -164,7 +164,7 @@ int makeTable(unsigned char* table,unsigned char* codes[],int tam){
 int encode(char *path,char  *pathcod){
 	unsigned char *name,**codes = NULL,*in = NULL,*out = NULL,*table = NULL,*line;
 	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam;
-	clock_t t;
+	clock_t t,t1;
 	FILE *fp,*fout;
 
 	t = clock();
@@ -214,13 +214,15 @@ int encode(char *path,char  *pathcod){
 		//putc('@',fout);
 		free(table);
 	}
-	t = (int)(t - clock())/(CLOCKS_PER_SEC/1000);
+	t1 = clock();
+	float time = (float)((t-t1) / CLOCKS_PER_SEC);
 	print(name,nblocos,t,tblocos,cblocos);
 
 	free(in);
 	free(out);
 	free(name);
 	free(tblocos);
+	free(cblocos);
 	for(int i = 0;i < nblocos * 256;i++) free(codes[i]);
 	free(codes);
 	fclose(fout);
@@ -230,21 +232,7 @@ int encode(char *path,char  *pathcod){
 
 int main(){
 	int n1,*n = NULL,tam = 1;
-	clock_t t;
 	unsigned char **c = NULL,table[256*(tam+2)*8];
 	encode("aaa.txt","aaa.txt.cod");
-	/*
-	t = clock();
-	n1 = read("test.cod",&n,&c);
-	t = (clock()-t)/(CLOCKS_PER_SEC/1000000);
-	printf("%.9f\n",t);
-	//pread(n,c,n1);
-	//for(int i = 0;i<10;i++)putc('\n',stdout);
-	t = clock();
-	n1 = read1("test.cod",&n,&c);
-	t = (clock()-t)/(CLOCKS_PER_SEC/1000000);
-	printf("%.9f\n",t);
-	//pread(n,c,n1);
-	*/
 	return 1;
 }

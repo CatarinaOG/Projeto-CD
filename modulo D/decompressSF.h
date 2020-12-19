@@ -31,6 +31,6 @@ void decompressBlockSF(unsigned char *buffer_shaf, char *buffer_new, char *chars
 
 /*Faz descompressao SF (cria ficheiro do tipo .rle ou original)
   tam_blocos_new == NULL implica que não há descompressão RLE*/
-int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2, int nr_blocos);
+int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2);
 
 #endif
