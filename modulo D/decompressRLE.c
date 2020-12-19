@@ -38,7 +38,7 @@ int bufferSizesRLE(FILE *fp, int **buffer_sizes_rle){
                 fscanf(fp,"%d",&((*buffer_sizes_rle)[_bloco]));
                 _bloco++;
             }
-            else fseek(fp,256,SEEK_CUR);
+            else fseek(fp,256,SEEK_CUR); /* Dá skip a 256 posicoes (nº maximo a saltar sem correr risco de passar o '@') */
         }
     }
 }
@@ -48,11 +48,11 @@ int bufferSizesRLE(FILE *fp, int **buffer_sizes_rle){
 /* Retorna número de posições a retroceder no ficheiro */
 int decompressBlockRLE(FILE *fp_original, int tam_buffer_rle, char *buffer_rle){
     char ch;
-    int _buffer, nr_rep, tam_bloco_new = 0, aux;
+    int _buffer, nr_rep, tam_bloco_new = 0, aux = tam_buffer_rle - 2; /* Variavel aux é usada como limite do buffer no caso de haver um padrao de repetição e não estiverem presentes no buffer os 3 chars necessários */
 
     for(_buffer = 0; _buffer < tam_buffer_rle; _buffer++){
         if(buffer_rle[_buffer] == '\0'){
-            if((aux = tam_buffer_rle - _buffer) <= 2) {
+            if(_buffer >= aux && (aux = tam_buffer_rle - _buffer) <= 2) {
                 tam_buffer_rle -= aux;
                 break;
             }

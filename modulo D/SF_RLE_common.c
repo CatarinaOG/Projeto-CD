@@ -1,5 +1,22 @@
 #include "SF_RLE_common.h"
 
+/********** Ler input **********/
+
+int encontrouArgumento(char *arg, char argc, char *argv[]){
+    int i = 2;
+    for(;i < argc;i++) 
+        if(!strcmp(arg,argv[i]))
+            return i;
+    return -1;
+}
+
+/********** Ficheiros **********/
+
+void closeFiles (FILE *lista_fps[], int nr_fps){ 
+    int i = 0;
+    for(;i < nr_fps; i++) fclose(lista_fps[i]);
+}
+
 /********** Extensões **********/
 
 int removeExtensao(char *path, char **path_new, int n){
@@ -55,14 +72,12 @@ void skipNrBlocosShaf(FILE *fp){
 
 extern int index_bloco;
 
-int gravarTamanhoBloco(int tam_bloco, int **array_tam_bloco, char qual){ /*qual == 'A' alteração no array tam_antes, qual=='D' alteraçao no array tam_depois*/
-    //printf("%c %d",qual,tam_bloco);
+int gravarTamanhoBloco(int tam_bloco, int **array_tam_bloco, char qual){
     if((*array_tam_bloco) == NULL){
         CheckPointer((*array_tam_bloco) = (int *) malloc(sizeof(int)));
     }
     else CheckPointer((*array_tam_bloco) = (int *) realloc((*array_tam_bloco),(index_bloco+1) * sizeof(int)));
     (*array_tam_bloco)[index_bloco] = tam_bloco;
-    //printf(" %c %d\n",qual,array_tam_bloco[index_bloco]);
     if(qual == 'D') index_bloco++;
     return 1;
 }
