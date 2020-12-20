@@ -137,58 +137,57 @@ int freqFileBuild (BFreq freqList, int block, char *fileName) {
 // esta funcao vai retornar a quantidade de blocos criados
 // espaco para se fazer a compressao RLE, escrever no ficheiro e contar os caracteres.... isto se for para ser feita
 // caso contrario apenas preencher a lista das frequencias
-int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
+int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName, int checkCom){
 	
-	int i, k = charLeft(fp_origin);  // numero de caracteres
+	int i;
 	
 	int rep;			// repeticoes de um caracter consecutivas
 	char repChar;		// caracter analizado
 	int remainChar;  
 	
-	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
-	*freqList = newBFreq;
+	int block = 0;						// numero do bloco
+	if (checkCom != 0) checkCom = 1;	// validade da compressao (0 == valido)
 	
-	for (i = 0; i < 255; i++) newBFreq->freq[i] = 0;
-	for (i = 0; i < 255; i++) newBFreq->freqRLE[i] = 0;
+	int buffSize;						// ultima posicao usada no blockBuffer
+	int posBuff;  						// posicao blockBuffer
+	char blockBuffer [66561];  			// bloco analisado
 	
-	int block = 0;		// numero do bloco
-	int checkCom = 1;	// validade da compressao (0 == valido)
+	int auxSize;						// ultima posicao usada no blockBuffer
+	char auxBuffer [1025];  			// auxiliar para o blockBuffer
 	
-	int buffSize;				// ultima posicao usada no blockBuffer
-	int posBuff;  				// posicao blockBuffer
-	char auxBuffer [1025];  	// auxiliar para o blockBuffer
-	char blockBuffer [66561];  	// bloco analisado
+	int posRLE = 0;  					// posicao blockRLE
+	char blockRLE [66561];  			// bloco com o resultado da compressao RLE
 	
-	int posRLE = 0;  			// posicao blockRLE
-	char blockRLE [66561];  	// bloco com o resultado da compressao RLE
-	
-	int fileIsOpen = 0; 		// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
+	int fileIsOpen = 0; 				// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
 	
 	FILE *fp_RLE;
 	
-	fgets (auxBuffer, 1025, fp_origin); 	// carregar o primeiro KB no auxBuffer
+	auxSize = fread (auxBuffer, sizeof(char), 1024, fp_origin); 	// carregar o primeiro KB no auxBuffer
+	
+	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
+	for (i = 0; i < 255; i++) newBFreq->freq[i] = 0;
+	for (i = 0; i < 255; i++) newBFreq->freqRLE[i] = 0;
+	
+	*freqList = newBFreq;
 	
 	
-	
-	if (!feof (fp_origin)){  // comecar a compressao caso tenha mais de 1 KB
-	
+	if (auxSize == 1024){  // comecar a compressao caso tenha mais de 1 KB
+		
 		do{	
 			block++;
 			
 			//  preparar o blockBuffer
 			strcpy (blockBuffer, auxBuffer);
-			fgets (blockBuffer + 1024, 64513, fp_origin);    // acrescentar os 63 KB ao blockBuffer (63*1024 + 1) + 1 KB do auxBuffer (0 -> 1023)
-			buffSize = 65536;
+			buffSize = auxSize + fread (blockBuffer + 1024, sizeof(char), 64512, fp_origin);    // acrescentar os 63 KB ao blockBuffer (63*1024 + 1) + 1 KB do auxBuffer (0 -> 1023)
 			
-			if (!feof(fp_origin)){  // caso em que e possivel que o fcheiro acabe no proximo KB
+			if (buffSize == 65536){  // caso em que e possivel que o fcheiro acabe no proximo KB
 				
-				fgets (auxBuffer, 1024, fp_origin);
+				auxSize = fread (auxBuffer, sizeof(char), 1024, fp_origin);
 				
-				if (feof (fp_origin))  // caso acabe no proximo KB
-					strcpy (blockBuffer, auxBuffer);
-					buffSize += 1024;
+				if (auxSize != 1024)  // caso acabe no proximo KB
+					strcpy (blockBuffer + 65536, auxBuffer);
+					buffSize += auxSize;
 			}
-			
 			
 			// caso em que se faz a compressao RLE
 			if (checkCom == 0 || block == 1){
@@ -196,11 +195,12 @@ int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 				rep = 1;
 				repChar = blockBuffer[0];
 				
-				for (posBuff = 1; posBuff < buffSize && posBuff < (k - (block-1)*65536); posBuff++){   // ciclo onde executa a compressao
+				for (posBuff = 1; posBuff < buffSize; posBuff++){   // ciclo onde executa a compressao
 					
-					remainChar = min (buffSize - posBuff, (k - (block-1)*65536) - posBuff);  // calcula quntos caracteres faltam ate ao final do bloco
+					remainChar = buffSize - posBuff;  // calcula quntos caracteres faltam ate ao final do bloco
 					
 					if (repChar != blockBuffer[posBuff] || remainChar == 1) {
+						
 						if (repChar == blockBuffer[posBuff])
 							rep++;
 						
@@ -237,8 +237,8 @@ int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 					}
 					
 					if (fp_RLE) {
-						for (i = 0; i < posRLE; i++)  
-							fprintf(fp_RLE, "%c", blockRLE[i]);  // escrever o resultado da compressao do bloco no ficheiro RLE
+						
+						fwrite (blockRLE, sizeof(char), posRLE, fp_RLE);  // escrever o resultado da compressao do bloco no ficheiro RLE
 						
 						for (i = 0; i < posRLE; i++)  // preencher a lista com as frequencias dos caracteres apos a compressao RLE
 							newBFreq->freqRLE[blockRLE[i]]++;
@@ -254,12 +254,14 @@ int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 			else 
 				newBFreq->blockSizeRLE = 0;
 			
+			
 			// preenche a lista com as frequencias dos caracteres deste bloco
 			newBFreq->blockSize = posBuff;
 			
 			for (i = 0; i < posBuff; i++){
 				newBFreq->freq[blockBuffer[i]]++;
 			}
+			
 			if (!feof(fp_origin)){
 				newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
 				
@@ -277,9 +279,9 @@ int RLEcompression (FILE *fp_origin, BFreq *freqList, char *fileName){
 		
 		newBFreq->next = NULL;
 		newBFreq->blockSizeRLE = 0;
-		newBFreq->blockSize = k;
+		newBFreq->blockSize = buffSize;
 		
-		for (i = 0; i < k; i++)
+		for (i = 0; i < buffSize + 1; i++)
 			newBFreq->freq[auxBuffer[i]]++;
 	}
 	
@@ -318,7 +320,7 @@ printf ("oi oi -> entrou direito com  str -> %s \n\n", str);
 	    	BFreq freqList;
 	    	
 printf ("oi oi -> inicio da RLEcompression\n");
-	    	nblocks = RLEcompression(fp_origin, &freqList, strcat(fileName,".rle"));
+	    	nblocks = RLEcompression(fp_origin, &freqList, strcat(fileName,".rle"), 1);
 printf ("oi oi -> fim da RLEcompression\n\n");
 			strcpy (fileName, str); // super importante pois a string f ficou danificada ao ser usada!!!!   ->    cenas.txt -> cenas.txt.rle
 	    	
