@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 
 
@@ -303,9 +304,11 @@ int main(int argc, char *argv[]){
 	if (!argc > 1) strcpy (str, argv[1]);
 	
 	if (strcmp(str, "")){
-
-printf ("oi oi -> entrou direito com  str -> %s \n\n", str);
-	
+		
+		float clockStart = clock();
+	    float clockEnd;
+	    float time;
+		
 		int nblocks;
 		
 		char fileName[30];
@@ -321,26 +324,31 @@ printf ("oi oi -> entrou direito com  str -> %s \n\n", str);
 	    	
 printf ("oi oi -> inicio da RLEcompression\n");
 	    	nblocks = RLEcompression(fp_origin, &freqList, strcat(fileName,".rle"), 1);
-printf ("oi oi -> fim da RLEcompression\n\n");
 			strcpy (fileName, str); // super importante pois a string f ficou danificada ao ser usada!!!!   ->    cenas.txt -> cenas.txt.rle
+printf ("oi oi -> fim da RLEcompression\n\n");
 	    	
 	    	// criar o ficheiro com as frequencias dos caracteres no ficheiro original (?realizado independentemente da situa?o)
 			freqFileBuild (freqList, nblocks, fileName);
 			
-		    printf ("oi oi -> noice chegou ao fim\n");
+printf ("oi oi -> noice chegou ao fim\n");
 			
-			//fclose(fp_origin);
 			freeBFreq(freqList);
-		    return 0;
 		}
 	    else{
 			printf("Can't open %s\n", fileName);
 			exit(1);
 	    }
 	    fclose(fp_origin);
+		
+	    // Reporta o tempo que demorou
+	    clockEnd = clock();
+	    time = (double)(((clockEnd - clockStart)/CLOCKS_PER_SEC))*1000;
+	    
+	    printf ("\n Ei princeso demorou %.3f ms\n\t\t.....se fosse a ti trocava por uma torradeira\n", time);
+	    return 0;
 	}
 	else {
-		printf ("Did not enter the location of the destination file\n");
+		printf ("Did not enter the location of the sorce file\n");
 		return 1;
 	}
 
