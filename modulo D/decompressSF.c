@@ -1,17 +1,17 @@
 #include "decompressSF.h"
 
-extern int nr_blocos;
-extern int *tam_antes;
-extern int *tam_depois;
-extern int index_bloco;
+extern int  nr_blocos;
+extern int  *tam_antes;
+extern int  *tam_depois;
+extern int  index_bloco;
 extern char saveBlockLength;
 
 /********** Análise do Bloco de codificações **********/
 
 int inicializa_arr(int **tam, char **chars, char ***codes, int N){
-    if( (*tam    = (int *)   malloc(sizeof(int)*N)   ) &&
-        (*chars  = (char *)  malloc(sizeof(char)*N)  ) &&
-        (*codes  = (char **) malloc(sizeof(char *)*N)))return 1;
+    if((*tam    = (int *)   malloc(sizeof(int)*N)   )  &&
+       (*chars  = (char *)  malloc(sizeof(char)*N)  )  &&
+       (*codes  = (char **) malloc(sizeof(char *)*N))) return 1;
     return 0;
 }
 
