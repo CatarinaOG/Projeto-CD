@@ -1,4 +1,4 @@
-#include "modulo_c.h"
+#include "thread_modulo_c.h"
  
 void ptable(unsigned char *table,int tam){
 	for(int i = 0;i < 8;i++){
@@ -321,12 +321,38 @@ float encode(char *path,char  *pathcod){
 	return time;
 }*/
 
+void pencode(ptarg arg){
+	unsigned char *out = arg->out,*in = arg->in,*line,*table = NULL;
+	int tam = arg->tblocos[1] + 3,off,n;
+	CHECK(table = malloc(sizeof(unsigned char)*256*8*tam));
+	makeTable(table,arg->codes,tam);
+
+	off = 0;
+	n = 0;
+	out[0] = 0;
+	for(int j = 0;j < arg->tblocos[0];j++){
+		line = table+(off*256*tam+in[j]*tam);
+		//printf("off->%d|n->%d\n",off,n);
+		//printf("%c|%d|%d->%s\nout->",in[j],in[j],j,line);
+		out[n] += line[2];
+		for(int k = 1;k<line[0];k++) out[++n] = line[k+2];
+		off = line[1];
+		//for(int k = 0;k<=n;k++) printf("%#x ",out[k]);
+		//putc('\n',stdout);
+	}
+	out[++n] = '\0';
+	arg->cblocos[0] = n;
+	free(table);
+}
+
 float encode(char *path,char  *pathcod){
-	unsigned char *name,*in = NULL,*out = NULL,*table = NULL,*line,buffer[BREAD];
-	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam,c = 0,max = BREAD;
-	pdarr codes;
+	unsigned char *name,**in = NULL,**out = NULL,*table = NULL,*line,buffer[BREAD];
+	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam,c = 0,max[NUM_THREADS];
+	pdarr codes[NUM_THREADS];
 	clock_t t,t1;
 	FILE *fp,*fout,*fpcod;
+	pthread_t thread[NUM_THREADS];
+	ptarg thread_arg[NUM_THREADS];
 
 	t = clock();
 
@@ -344,58 +370,67 @@ float encode(char *path,char  *pathcod){
 	fscanf(fpcod,"@%*c@%d@",&nblocos);
 	fread(buffer,sizeof(unsigned char),BREAD,fpcod);
 	CHECK(tblocos = malloc(sizeof(int)*nblocos*2));
+	CHECK(in = malloc(sizeof(unsigned char*)*NUM_THREADS));
+	CHECK(out = malloc(sizeof(unsigned char*)*NUM_THREADS));
 	CHECK(cblocos = malloc(sizeof(int)*nblocos));
-	CHECK(in = malloc(sizeof(unsigned char)*max));
-	CHECK(out = malloc(sizeof(unsigned char)*max))
 	fprintf(fout,"@%d",nblocos);
-	CREATE_DARR(codes);
+
+	for(int i = 0;i < NUM_THREADS && i<nblocos;i++){
+		CHECK(thread_arg[i] = malloc(sizeof(targ)));
+		max[i] = BREAD;
+		CHECK(in[i] = malloc(sizeof(unsigned char)*max[i]));
+		CHECK(out[i] = malloc(sizeof(unsigned char)*max[i]));
+		CREATE_DARR(codes[i]);
+	}
 	
-	for(int i = 0;i<nblocos;i++){
-		c = read1(fpcod,tblocos+2*i,codes,buffer,c);
-		if (max < tblocos[i*2]) {
-			max = tblocos[i*2];
-			free(in);free(out);
-			CHECK(in = malloc(sizeof(unsigned char)*max));
-			CHECK(out = malloc(sizeof(unsigned char)*max));
+	for(int i = 0;i<nblocos;i+=NUM_THREADS){
+		for(int j = 0;j<NUM_THREADS && j+i<nblocos;j++){
+			n = i+j;
+			c = read1(fpcod,tblocos+2*n,codes[j],buffer,c);
+
+			if (max[j] < tblocos[n*2]) {
+				max[j] = tblocos[n*2];
+				free(in[j]);free(out[j]);
+				CHECK(in[j] = malloc(sizeof(unsigned char)*max[j]));
+				CHECK(out[j] = malloc(sizeof(unsigned char)*max[j]));
+			}
+			fread(in[j],sizeof(unsigned char),tblocos[n*2],fp);
+			//SET_TARG(thread_arg[j],codes+j,in[j],out[j],tblocos+(n*2),cblocos+n);
+			thread_arg[j]->codes = codes[j];
+			thread_arg[j]->in = in[j];
+			thread_arg[j]->out = out[j];
+			thread_arg[j]->tblocos = tblocos+n*2;
+			thread_arg[j]->cblocos = cblocos+n;
+
+			pthread_create(&(thread[j]),NULL,pencode,thread_arg[j]); 
+		}
+		for(int j = 0;j<NUM_THREADS && j+i<nblocos;j++){
+			pthread_join(thread[i],NULL);
+			fprintf(fout,"@%d@",cblocos[i+j]);
+			fwrite(out[j],sizeof(unsigned char),cblocos[i+j],fout);
 		}
 
-		fread(in,sizeof(unsigned char),tblocos[i*2],fp);
-		tam = tblocos[i*2+1] + 3;
-		CHECK(table = malloc(sizeof(unsigned char)*256*8*tam));
-		makeTable(table,codes,tam);
 
-		off = 0;
-		n = 0;
-		out[0] = 0;
-		for(int j = 0;j<tblocos[i*2];j++){
-			line = table+(off*256*tam+in[j]*tam);
-			//printf("off->%d|n->%d\n",off,n);
-			//printf("%c|%d|%d->%s\nout->",in[j],in[j],j,line);
-			out[n] += line[2];
-			for(int k = 1;k<line[0];k++) out[++n] = line[k+2];
-			off = line[1];
-			//for(int k = 0;k<=n;k++) printf("%#x ",out[k]);
-			//putc('\n',stdout);
-		}
-		out[++n] = '\0';
-		cblocos[i] = n;
-		fprintf(fout,"@%d@",n);
-		fwrite(out,sizeof(unsigned char),n,fout);
 		//putc('@',fout);
-		free(table);
 	}
 	t1 = clock();
 	float time = (double)(t1-t) * 1000 / CLOCKS_PER_SEC;
 	print(name,nblocos,time,tblocos,cblocos);
 
+	for(int i = 0;i<NUM_THREADS;i++){
+		free(in[i]);
+		free(out[i]);
+		//DEL_DARR(codes[i])
+	}
 	free(in);
 	free(out);
 	free(name);
 	free(tblocos);
 	free(cblocos);
-	DEL_DARR(codes)
 	fclose(fout);
 	fclose(fp);
+	fclose(fpcod);
+
 	return time;
 }
 
