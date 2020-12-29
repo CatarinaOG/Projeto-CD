@@ -278,10 +278,10 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			
 			if (!feof(fp_origin)){
 				newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
+				newBFreq = newBFreq->next;
 				
 				for (i = 0; i < 255; i++) newBFreq->freq[i] = 0;
 				for (i = 0; i < 255; i++) newBFreq->freqRLE[i] = 0;
-				newBFreq = newBFreq->next;
 			}
 			else 
 				newBFreq->next = NULL;
