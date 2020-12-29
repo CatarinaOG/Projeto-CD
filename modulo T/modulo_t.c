@@ -277,7 +277,7 @@ int descobreOndeComecamFreqs0 (Nodo lista){
 
 
 
-int main (){
+int moduloT (char *sorce_file_Name){
 
     float clockStart = clock();
     float clockEnd;
@@ -291,7 +291,7 @@ int main (){
 
     // Abre o ficheiro freq
     FILE *fp;
-    fp = fopen( "aaa.txt.freq" , "r");
+    fp = fopen( sorce_file_Name , "r");
 
     // Guarda numa variável se o ficheiro é RLE ou não
     origRle = ORIG_RLE(fp);
