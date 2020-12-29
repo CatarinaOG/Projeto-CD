@@ -333,7 +333,7 @@ void printModuloF (int block, char *sorce_file_Name, float time, float compressa
 
 // arg1: "-c r"      -> 0| 1(std)  (possibilidade de obrigatoriamente realizar a compressao)
 // arg2: "-b K|m|M"  -> 1(640Kb) | 2(8Mb) | 3(64Mb)
-int rleCompression (char *sorce_file_Name, int arg1, int arg2){
+int moduloF (char *sorce_file_Name, int arg1, int arg2){
 	if (sorce_file_Name){
 		
 		float clockStart = clock();
@@ -397,13 +397,6 @@ int rleCompression (char *sorce_file_Name, int arg1, int arg2){
 		return -1;
 	}
 
-}
-
-
-int main (int argC, char *argV[]) {
-	int r = rleCompression ("aaa2.txt", 1, 0);
-	printf ("\n\n--------------------------------\n valor retornado: %d",r);
-	return r;
 }
 
 
