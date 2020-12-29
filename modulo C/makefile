@@ -1,6 +1,6 @@
 #OBJS specifies which files to compile as part of the project
-#OBJS = modulo_c.o
-OBJS = thread_modulo_c.o 
+OBJS = modulo_c.o
+T_OBJS = thread_modulo_c.o 
 
 #CC specifies which compiler we're using
 CC = gcc
@@ -19,10 +19,14 @@ OBJ_NAME = test
 #This is the target that compiles our executable
 %.o:%.c %.h
 	$(CC) -c $< $(COMPILER_FLAGS)
-	$(CC) -S $< $(COMPILER_FLAGS)
+
+
+thread_test : $(T_OBJS)
+	$(CC) -o $@ $^ $(COMPILER_FLAGS) $(LINKER_FLAGS) 
+	make test
 
 test : $(OBJS)
 	$(CC) -o $@ $^ $(COMPILER_FLAGS) $(LINKER_FLAGS) 
 
 clean:
-	rm $(OBJ_NAME) *.o
+	rm test thread_test *.o

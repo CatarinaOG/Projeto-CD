@@ -405,7 +405,7 @@ float encode(char *path,char  *pathcod){
 			pthread_create(&(thread[j]),NULL,pencode,thread_arg[j]); 
 		}
 		for(int j = 0;j<NUM_THREADS && j+i<nblocos;j++){
-			pthread_join(thread[i],NULL);
+			pthread_join(thread[j],NULL);
 			fprintf(fout,"@%d@",cblocos[i+j]);
 			fwrite(out[j],sizeof(unsigned char),cblocos[i+j],fout);
 		}
