@@ -27,7 +27,7 @@ typedef struct freqFileBuild_output {
 // A funcao cria um ficheiro com as frequencias dos caracteres no ficheiro original quer seja realizada compressao ou nao.
 // Caso seja realizaca compressao RLE entao tambem cria um ficheiro com o conteudo apos sofrer as alteracoes necessarias
 //   para a compressao, e um ficheiro com as frequencias dos caracteres do mesmo.
-int rleCompression ( char *sorce_file_Name, int arg1, int arg2);
+int moduloF ( char *sorce_file_Name, int arg1, int arg2);
 
 
 #endif

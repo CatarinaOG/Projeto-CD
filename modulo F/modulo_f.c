@@ -1,4 +1,4 @@
-//#include "modulo_f.h"
+#include "modulo_f.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -156,7 +156,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	
 	int rep;			// repeticoes de um caracter consecutivas
 	char repChar;		// caracter analizado
-	int remainChar;  
+	int remainChar; 
 	
 	int block = 0;									// numero do bloco
 	if (checkCom != 0) checkCom = 1;				// validade da compressao (0 == valido)
@@ -169,6 +169,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	char auxBuffer [1025];  						// auxiliar para o blockBuffer
 	
 	int posRLE = 0; 								// posicao blockRLE
+	int lastPosRLE = 0;
 	char blockRLE [blockSizeMultiple + 1025];  		// bloco com o resultado da compressao RLE
 	
 	int fileIsOpen = 0; 	// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
@@ -253,10 +254,11 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 						
 						fwrite (blockRLE, sizeof(char), posRLE, fp_RLE);  // escrever o resultado da compressao do bloco no ficheiro RLE
 						
-						for (i = 0; i < posRLE; i++)
+						for (i = lastPosRLE; i < posRLE; i++)
 							newBFreq->freqRLE [(int) blockRLE[i]]++;  // preencher a lista com as frequencias dos caracteres apos a compressao RLE
 						
-						newBFreq->blockSizeRLE = posRLE;  // colocar o tamanho do bloco com o resultado compressao
+						newBFreq->blockSizeRLE = posRLE - lastPosRLE;  // colocar o tamanho do bloco com o resultado compressao
+						lastPosRLE = posRLE;
 					}
 					else {
 						printf("Can't open %s\n", fileName);
