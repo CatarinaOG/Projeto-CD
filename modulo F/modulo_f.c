@@ -239,7 +239,6 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 					else 
 						rep++;
 				}
-				
 				if (block == 1 && checkCompression(posBuff, posRLE))  // testa se vale a pena aplicar a compressao ao resto do ficheiro
 					checkCom = 0;
 				
@@ -371,7 +370,7 @@ int rleCompression (char *sorce_file_Name, int arg1, int arg2){
 			if (nblocks == -2) return -2;
 			
 			strcpy (fileName, sorce_file_Name); // super importante pois a string fileName ficou danificada ao ser usada!!!!   ->    file.txt -> file.txt.rle
-			printf ("oi oi -> %d\n", freqList->next->freq[1]);
+			
 	    	// criar o ficheiro com as frequencias dos caracteres no ficheiro original (e realizado independentemente da situacao)
 			ffb = freqFileBuild (freqList, nblocks, fileName);
 			if (ffb == NULL) return -2;

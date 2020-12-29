@@ -46,8 +46,8 @@ int main(int argc, char *argv[]){
 		
 		printf("\n -> Os ficheiros sao IGUAIS\n");
 		
-		close (f1);
-		close (f2);
+		fclose (f1);
+		fclose (f2);
 		
 		return 0;
 	}
