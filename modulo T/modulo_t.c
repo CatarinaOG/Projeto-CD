@@ -302,8 +302,8 @@ int moduloT (char *sorce_file_Name){
 
     // Abre o ficheiro onde vamos escrever
     FILE *fp2;
-    if (origRle == 'N') fp2 = fopen ("exemplo6.txt.cod","w");
-    else fp2 = fopen ("exemplo6.txt.rle.cod","w");
+    if (origRle == 'N') fp2 = fopen ("aaa.txt.cod","w");
+    else fp2 = fopen ("aaa.txt.rle.cod","w");
 
     // Escreve os 2 primeiros dados (iguais ao ficheiro recebido)
     escreveInfoInicial(fp2,origRle,nrBlocos);
