@@ -1,7 +1,7 @@
 #include "./modulo D/modulo_d.h"
 #include "./modulo C/modulo_c.h"
 #include "./modulo F/modulo_f.h"
-//#include "./modulo T/modulo_t.h"
+#include "./modulo T/modulo_t.h"
  
 int main(int argc, char *argv[]) {
     if(argc > 1){   
