@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 //-----------------------------------------------------------------LEITURA-------------------------------------------------------------------------
 
@@ -245,9 +246,9 @@ void escreveTamBloco (FILE *fp2 , int tamBloco){
 }
 
 // Escreve as informações do trabalho na consola 
-void textoDeConsola (char orig_rle , float time , int nrBlocos , int *tamBlocos){
+void textoDeConsola (char orig_rle , float time , int nrBlocos , int *tamBlocos , char *filename){
 
-    int i;
+    int i,j=0;
 
     printf("Ana Catarina a93259, Mafalda Costa a83919 , Engenharia Informática , 3-Janeiro-2021\n");
     printf("Módulo: t (cálculo dos códigos dos símbolos)\n");
@@ -260,8 +261,9 @@ void textoDeConsola (char orig_rle , float time , int nrBlocos , int *tamBlocos)
 
     printf("Tempo de execução do módulo: %f milisegundos\n",time);
 
-    if (orig_rle == 'N') printf("Ficheiro gerado: exemplo.txt.cod\n");
-    else printf("Ficheiro gerado: exemplo.txt.rle.cod\n");
+    printf("Ficheiro gerado: %s",filename);
+
+    printf("\n");
 
 }
 
@@ -277,21 +279,31 @@ int descobreOndeComecamFreqs0 (Nodo lista){
 
 
 
-int moduloT (char *sorce_file_Name){
+int moduloT (char *file){
 
     float clockStart = clock();
     float clockEnd;
     float time;
-    int nrBlocos , i;
+    int nrBlocos , i ,j;
     char origRle;
     int *freqBlocos;
     struct simbolo *listaStruct;
     int *tamBlocos;
     int end;
+    char *filename;
 
     // Abre o ficheiro freq
     FILE *fp;
-    fp = fopen( sorce_file_Name , "r");
+    fp = fopen( file , "r");
+
+    for (j = 0; (file)[j]!='\0' ; j++ )
+
+    filename = malloc(sizeof(char)*j);
+
+    for (j = 0 ; (file)[j+4] != '\0' ; j++)
+        filename[j] = (file)[j];
+
+    strcat(filename,"cod");
 
     // Guarda numa variável se o ficheiro é RLE ou não
     origRle = ORIG_RLE(fp);
@@ -302,8 +314,7 @@ int moduloT (char *sorce_file_Name){
 
     // Abre o ficheiro onde vamos escrever
     FILE *fp2;
-    if (origRle == 'N') fp2 = fopen ("aaa.txt.cod","w");
-    else fp2 = fopen ("aaa.txt.rle.cod","w");
+    fp2 = fopen (filename,"w");
 
     // Escreve os 2 primeiros dados (iguais ao ficheiro recebido)
     escreveInfoInicial(fp2,origRle,nrBlocos);
@@ -327,7 +338,7 @@ int moduloT (char *sorce_file_Name){
     time = (double)(((clockEnd - clockStart)/CLOCKS_PER_SEC))*1000;
 
     // Informações na consola
-    textoDeConsola(origRle,time,nrBlocos,tamBlocos);
+    textoDeConsola(origRle,time,nrBlocos,tamBlocos,filename);
 
     // Fecha os ficheiros, tanto o de leitura como o de escrita
     fclose(fp);

@@ -7,7 +7,7 @@
 #include <time.h>
 #include "modulo_t.h"
 
-int moduloT ( char *sorce_file_Name);
+int moduloT ( char *file);
 
 
 #endif
