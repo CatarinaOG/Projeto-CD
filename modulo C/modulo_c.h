@@ -31,6 +31,6 @@ int read(char* path,int* tblocos[],unsigned char** codes[]);
 
 int makeTable(unsigned char* table,pdarr codes,int tam);
 
-float encode(char *path,char  *pathcod);
+float moduloC(char *path);
 
 #endif
