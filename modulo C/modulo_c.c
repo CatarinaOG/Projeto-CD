@@ -324,8 +324,8 @@ float encode(char *path,char  *pathcod){
 	return time;
 }*/
 
-float encode(char *path,char  *pathcod){
-	unsigned char *name,*in = NULL,*out = NULL,*table = NULL,*line,buffer[BREAD];
+float moduloC(char *path){
+	unsigned char *name,*in = NULL,*out = NULL,*table = NULL,*line,buffer[BREAD],*pathcod;
 	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam,c = 0,max = BREAD;
 	pdarr codes;
 	clock_t t,t1;
@@ -335,10 +335,12 @@ float encode(char *path,char  *pathcod){
 
 	for(i = 0;path[i] != '\0';i++);
 	CHECK(name = malloc(sizeof(char)*i+6));
-	if (!name) return -1;
+	CHECK(pathcod = malloc(sizeof(char)*i+6));
 
 	strcpy(name,path);
 	strcpy(name+i,".shaf");
+	strcpy(pathcod,path);
+	strcpy(pathcod+i,".cod");
 
 	CHECK(fp = fopen(path,"r"));
 	CHECK(fout = fopen(name,"w"));
@@ -395,6 +397,7 @@ float encode(char *path,char  *pathcod){
 	free(in);
 	free(out);
 	free(name);
+	free(pathcod);
 	free(tblocos);
 	free(cblocos);
 	DEL_DARR(codes)
@@ -409,7 +412,7 @@ int main(){
 	float total = 0;
 	unsigned char **c = NULL,table[256*(tam+2)*8];
 	//for (int i = 0;i < 1000;i++)
-		total += encode("aaa.txt.rle","aaa.txt.rle.cod");
+		total += moduloC("aaa.txt.rle");
 	//printf("%f\n",total/1000);
 	return 1;
 }
