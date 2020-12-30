@@ -56,7 +56,8 @@ int read1(FILE *fp,int *tblocos,pdarr codes,unsigned char buffer[],int c){
  			a[tcode] = a[tcode] + ((buffer[c] - '0') << (n-1));
  			c++;
 		}
-		if(n != 8) tcode++;
+		if(n == 0){n = 8;a[++tcode] = 0;tcode++;}
+		else if(n != 8) tcode++;
 		a[tcode] = '\0';
 		a[1] = 8-n;
 		a[0] = tcode-2;
@@ -64,7 +65,8 @@ int read1(FILE *fp,int *tblocos,pdarr codes,unsigned char buffer[],int c){
 		if (a[0] != 0){
 			REALLOC_DARR(codes,total,tcode);
 			(codes->used)[(codes->n)++] = i;
-			strcpy((codes->arr)+total,a);
+			for(int j = 0;j<tcode;j++)(codes->arr)[j+total] = a[j];
+			//(codes->arr+total)[j] = '\0';
 			total += tcode;
 
 			/*
@@ -230,6 +232,7 @@ int makeTable(unsigned char* table,pdarr codes,int tam){
 		n = codes->arr[total]+1;
 		for(int j = 0;j<= n;j++)
 			table[n1*tam+j] = codes->arr[total++];
+		table[n1*tam+n+1] = 0;
 		for(int j = 1;j<8;j++){
 			ind = table+(j*256*tam+n1*tam);
 			aind = table+((j-1)*256*tam+n1*tam);
@@ -440,7 +443,7 @@ int main(){
 	float total = 0;
 	unsigned char **c = NULL,table[256*(tam+2)*8];
 	//for (int i = 0;i < 1000;i++)
-		total += encode("aaa.txt","aaa.txt.cod");
+		total += encode("aaa.txt.rle","aaa.txt.rle.cod");
 	//printf("%f\n",total/1000);
 	return 1;
 }
