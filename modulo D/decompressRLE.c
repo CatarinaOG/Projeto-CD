@@ -38,7 +38,7 @@ int bufferSizesRLE(FILE *fp, int **buffer_sizes_rle){
                 fscanf(fp,"%d",&((*buffer_sizes_rle)[_bloco]));
                 _bloco++;
             }
-            else fseek(fp,255,SEEK_CUR); /* Dá skip a 256 posicoes (nº maximo a saltar sem correr risco de passar o '@') */
+            else fseek(fp,256,SEEK_CUR); /* Dá skip a 256 posicoes (nº maximo a saltar sem correr risco de passar o '@') */
         }
     }
 }

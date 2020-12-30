@@ -1,4 +1,8 @@
 #include "modulo_d.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 /* A variável "saveBlockLength" é usada para saber quando é que deve gravar o tamanho dos blocos, por exemplo 
 quando é necessário fazer ambas as descompressões não queremos guardar os valores da descompressao RLE */
