@@ -11,6 +11,8 @@
 
 int inicializa_arr(int **tam, char **chars, char ***codes, int N);
 
+void freeCodes(char **codes, int nr_codes);
+
 /*Analiza o bloco, obtendo os comprimentos das diferentes sequencias de bits(array "tam"), os chars correspondentes a cada uma (array "chars")
   e as próprias sequencias (lista de strings "codes")
   fp tem de apontar para o inicio do bloco*/
