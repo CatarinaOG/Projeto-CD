@@ -142,19 +142,21 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	char repChar;		// caracter analizado
 	int remainChar; 
 	
-	int block = 0;									// numero do bloco
+	int block = 0;							// numero do bloco
 	if(checkCom==1) checkCom=0;
 
-	int buffSize;									// ultima posicao usada no blockBuffer
-	int posBuff;  									// posicao blockBuffer
-	char blockBuffer [blockSizeMultiple + 1025];  	// bloco analisado
+	int buffSize;							// ultima posicao usada no blockBuffer
+	int posBuff;  							// posicao blockBuffer
+	char *blockBuffer;  					// bloco analisado
+	blockBuffer = (char*) malloc (sizeof(char) * blockSizeMultiple + 1025);
 	
-	int auxSize;									// ultima posicao usada no blockBuffer
-	char auxBuffer [1025];  						// auxiliar para o blockBuffer
+	int auxSize;							// ultima posicao usada no blockBuffer
+	char auxBuffer [1025];  				// auxiliar para o blockBuffer
 	
-	int posRLE = 0; 								// posicao blockRLE
+	int posRLE = 0; 						// posicao blockRLE
 	int lastPosRLE = 0;
-	char blockRLE [blockSizeMultiple + 1025];  		// bloco com o resultado da compressao RLE
+	char *blockRLE;  						// bloco com o resultado da compressao RLE
+	blockRLE = (char*) malloc (sizeof(char) * blockSizeMultiple + 1025);
 	
 	int fileIsOpen = 0; 	// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
 	
@@ -224,17 +226,17 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 					else 
 						rep++;
 				}
+				
 				if (block == 1 && checkCompression(posBuff, posRLE))  // testa se vale a pena aplicar a compressao ao resto do ficheiro
 					checkCom = 0;
 				
 				if (checkCom == 0) {
 					// abrir o ficheiro para escrever o resultado da compressao RLE caso o ficheiro ainda nao esteja aberto
-					if (!fileIsOpen) {
-						fileIsOpen = 1;
+					if (!fileIsOpen)
 						fp_RLE = fopen (fileName, "w");
-					}
 					
 					if (fp_RLE) {
+						fileIsOpen = 1;
 						
 						fwrite (blockRLE, sizeof(char), posRLE, fp_RLE);  // escrever o resultado da compressao do bloco no ficheiro RLE
 						
@@ -246,7 +248,8 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 					}
 					else {
 						printf("Can't open %s\n", fileName);
-						return -2;
+						block = -2;
+						break;
 					}
 				}
 			}
@@ -270,7 +273,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			}
 			else 
 				newBFreq->next = NULL;
-		
+			
 		} while (!feof(fp_origin));
 		
 		if (fileIsOpen) *compression = totalCompression (fp_origin, fp_RLE);
@@ -284,6 +287,9 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 		for (i = 0; i < auxSize + 1; i++)
 			newBFreq->freq [(int) auxBuffer[i]]++;
 	}
+	
+	free(blockBuffer);
+	free(blockRLE);
 	
 	fclose (fp_RLE);
 	
@@ -319,11 +325,13 @@ void printModuloF (int block, char *source_file_Name, float time, float compress
 
 // arg1: "-c r"      -> 0| 1(std)  (possibilidade de obrigatoriamente realizar a compressao)
 // arg2: "-b K|m|M"  -> 1(640Kb) | 2(8Mb) | 3(64Mb)
-int /*moduloF*/main (int argc, char **argv){
+int moduloF (int argc, char **argv){
+	
 	char *source_file_Name = argv[1];
-	int arg1 = 0;
-
+	
 	if (source_file_Name){
+		
+		int i, arg1 = 0;
 		
 		float clockStart = clock();
 	    float clockEnd;
@@ -342,20 +350,22 @@ int /*moduloF*/main (int argc, char **argv){
 	    if (fp_origin){
 	    	BFreq freqList;
 	    	
-	    	if(argc==5 && strcmp(argv[4],"-c") && strcmp(argv[5],"r")) arg1 = 1;
-
-	    	if(argc>=5 && strcmp(argv[5],"-b")){
-
-		    	if(strcmp(argv[5],"K")) blockSizeMultiple = 640*1024; 		// "-b K"
-
-		    	if(strcmp(argv[5],"m")) blockSizeMultiple = 8*1024*1024;	// "-b m"
-
-		    	if(strcmp(argv[5],"M")) blockSizeMultiple = 64*1024*1024;	// "-b M"
-
-				if(argc==7 && strcmp(argv[6],"-c") && strcmp(argv[7],"r")) arg1 = 1;
+	    	for (i = 2; i < argc; i += 2){
+	    		if(!strcmp(argv[i],"-c") && i+1 < argc && !strcmp(argv[i+1],"r"))		// "-c r"
+	    			arg1 = 1;
+	    		
+	    		if(!strcmp(argv[i],"-b") && i+1 < argc) {
+	    			if(!strcmp(argv[i+1],"K"))				// "-b K"
+						blockSizeMultiple = 640*1024;
+					
+		    		if(!strcmp(argv[i+1],"m"))				// "-b m"
+						blockSizeMultiple = 8*1024*1024;
+					
+		    		if(!strcmp(argv[i+1],"M"))				// "-b M"
+						blockSizeMultiple = 64*1024*1024;
+				} 
 			}
 			
-	    	
 	    	nblocks = applyRLECompression (fp_origin, &freqList, strcat(fileName,".rle"), arg1, blockSizeMultiple, &compression);
 			if (nblocks == -2) return -2;
 			
