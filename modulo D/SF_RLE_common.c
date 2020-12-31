@@ -19,18 +19,13 @@ void closeFiles (FILE *lista_fps[], int nr_fps){
 
 /********** Extensões **********/
 
-int removeExtensao(char *path, char **path_new, int n){
+int findPath(char *path, char **path_new, char *ext_new, int rmv, int add){
     int i;
     for(i = 0;path[i] != '\0';i++);
-    i -= n; /* nº de chars a copiar da string path */
-    CheckPointer(*path_new = (char *) malloc(i + 1));
+    i -= rmv; /* nº de chars a copiar da string path */
+    CheckPointer(*path_new = (char *) malloc(i + add + 1)); /* i (nº de chars sem a extensao a remover) + add + 1 (este 1 corresponde ao espaço para o '\0')*/
     strncpy(*path_new,path,i);
-    return 1;
-}
-
-int substituiExtensao(char *path, char **path_new, char *ext_new, int n){
-    CheckReturnValue(removeExtensao(path,path_new,n));
-    strcat(*path_new,ext_new);
+    if(ext_new) strcat(*path_new,ext_new);
     return 1;
 }
 
@@ -40,33 +35,6 @@ int checkExtensao(char *path, char *extensao, int tam_extensao){
     if(strcmp(&(path[i - tam_extensao]), extensao)) return 1;
     return 0;
 }
-
-/********** Ler ficheiros **********/
-
-char checkRLE(FILE *fp){
-    skip_AtSign(fp);
-    return (char) fgetc(fp);
-}
-
-int nrBlocos(FILE *fp){
-    int Nr_blocos;
-    skip_AtSign(fp);
-    fscanf(fp,"%d",&Nr_blocos);
-    skip_AtSign(fp);
-    return Nr_blocos;
-}
-
-void tamanhoBloco(FILE *fp, int *tam_bloco){
-    fscanf(fp,"%d",tam_bloco);
-    skip_AtSign(fp);
-}
-
-void skipNrBlocosShaf(FILE *fp){
-    skip_AtSign(fp);
-    fscanf(fp,"%*d"); /*Skip ao nº de blocos*/
-    skip_AtSign(fp);
-}
-
 
 /********** Gravar Tamanho **********/
 
