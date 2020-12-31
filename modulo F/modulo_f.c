@@ -143,7 +143,8 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	int remainChar; 
 	
 	int block = 0;									// numero do bloco
-	
+	if(checkCom==1) checkCom=0;
+
 	int buffSize;									// ultima posicao usada no blockBuffer
 	int posBuff;  									// posicao blockBuffer
 	char blockBuffer [blockSizeMultiple + 1025];  	// bloco analisado
@@ -318,7 +319,7 @@ void printModuloF (int block, char *source_file_Name, float time, float compress
 
 // arg1: "-c r"      -> 0| 1(std)  (possibilidade de obrigatoriamente realizar a compressao)
 // arg2: "-b K|m|M"  -> 1(640Kb) | 2(8Mb) | 3(64Mb)
-int moduloF (int argc, char **argv){
+int /*moduloF*/main (int argc, char **argv){
 	char *source_file_Name = argv[1];
 	int arg1 = 0;
 
@@ -341,17 +342,17 @@ int moduloF (int argc, char **argv){
 	    if (fp_origin){
 	    	BFreq freqList;
 	    	
-	    	if(argc==4 && argv[3]=="-c" && argv[4]=="r") arg1 = 1;
+	    	if(argc==5 && strcmp(argv[4],"-c") && strcmp(argv[5],"r")) arg1 = 1;
 
-	    	if(argc>=4 && argv[3]=="-b"){
+	    	if(argc>=5 && strcmp(argv[5],"-b")){
 
-		    	if(argv[4]=="K") blockSizeMultiple = 640*1024; 		// "-b K"
+		    	if(strcmp(argv[5],"K")) blockSizeMultiple = 640*1024; 		// "-b K"
 
-		    	if(argv[4]=="m") blockSizeMultiple = 8*1024*1024;	// "-b m"
+		    	if(strcmp(argv[5],"m")) blockSizeMultiple = 8*1024*1024;	// "-b m"
 
-		    	if(argv[4]=="M") blockSizeMultiple = 64*1024*1024;	// "-b M"
+		    	if(strcmp(argv[5],"M")) blockSizeMultiple = 64*1024*1024;	// "-b M"
 
-				if(argc==6 && argv[5]=="-c" && argv[6]=="r") arg1 = 1;
+				if(argc==7 && strcmp(argv[6],"-c") && strcmp(argv[7],"r")) arg1 = 1;
 			}
 			
 	    	
@@ -382,12 +383,10 @@ int moduloF (int argc, char **argv){
 	    return 0;
 	}
 	else {
-		printf ("Did not enter the location of the sorce file\n");
+		printf ("Did not enter the location of the source file\n");
 		return -1;
 	}
 
 }
-
-
 
 
