@@ -271,7 +271,7 @@ void textoDeConsola (char orig_rle , float time , int nrBlocos , int *tamBlocos 
 int descobreOndeComecamFreqs0 (Nodo lista){
     int i=0;
 
-    while(lista[i].freq!=0)
+    while(lista[i].freq!=0 && i<256)
         i++;
 
     return i;
