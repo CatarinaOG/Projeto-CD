@@ -3,13 +3,6 @@
 
 #include "decompressRLE.h"
 #include "SF_RLE_common.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-/*'C' representa que passará a ler as sequencias
-    de bits que representam os diversos chars
-  'T' significa que irá ler o tamanho do bloco */
-void mudaInputType(char *inputType);
 
 /*função que imprime valores de rle repetidos */
 void print_decompress_RLE(FILE *fp, char valor_rle, int n_rep);
