@@ -324,6 +324,10 @@ int moduloT (char *file){
     // Fecha os ficheiros, tanto o de leitura como o de escrita
     fclose(fp);
     fclose(fp2);
+    
+    for (int k=0 ; k<256 ; k++)
+    free(listaStruct[k].bits);
+    
     free(listaStruct);
     free(tamBlocos);
 
