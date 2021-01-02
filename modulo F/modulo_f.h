@@ -8,10 +8,8 @@
 #include "modulo_f.h"
 
 typedef struct blockfreq {
-	int blockSize;
-	int freq[255];
-	int blockSizeRLE;
-	int freqRLE[255];
+	int blockSize, *freq;
+	int blockSizeRLE, *freqRLE;
 	struct blockfreq *next;
 } *BFreq;
 
