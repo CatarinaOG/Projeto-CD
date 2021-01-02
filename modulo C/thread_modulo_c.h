@@ -28,18 +28,12 @@ typedef struct {
 	pdarr codes;
 } targ,*ptarg;  
 
-void ptable(unsigned char *table,int tam);
-
-void pread(int tblocos[],unsigned char* codes[],int nblocos);
-
 void print(char* name,int nblocos,float time,int *tblocos,int *cblocos);
 
-int read1(FILE *fp,int *tblocos,pdarr codes,unsigned char buffer[],int c);
-
-int read(char* path,int* tblocos[],unsigned char** codes[]);
+int read(FILE *fp,int *tblocos,pdarr codes,unsigned char buffer[],int c);
 
 int makeTable(unsigned char* table,pdarr codes,int tam);
 
-float encode(char *path,char  *pathcod);
+float moduloC(char *path);
 
 #endif
