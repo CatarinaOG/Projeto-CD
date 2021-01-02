@@ -9,9 +9,9 @@
 
 typedef struct blockfreq {
 	int blockSize;
-	int freq[255];
+	int freq[256];
 	int blockSizeRLE;
-	int freqRLE[255];
+	int freqRLE[256];
 	struct blockfreq *next;
 } *BFreq;
 

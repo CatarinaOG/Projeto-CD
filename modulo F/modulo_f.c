@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <conio.h>
 
 
 void freeFFBout (FFBout t){
@@ -21,7 +22,8 @@ void freeBFreq (BFreq t){
 	}
 }
 
-
+// 0 -> a compressao nao e valida
+// 1 -> a compressao e valida
 int checkCompression (float source,float result){
     float comp;
     int r = 0; 
@@ -40,7 +42,7 @@ float totalCompression (FILE *fp_origin, FILE *fp_RLE){
 	fseek(fp_RLE, 0, SEEK_END);
 	result = ftell(fp_RLE);
 	
-    return (source-result)/source;
+    return (float)(source-result)/source;
 }
 
 
@@ -71,14 +73,14 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
             
             ffb->arrBlock[block] = pointer->blockSize;
             
-            for (i = 0, last = -1; i < 255; i++) {
+            for (i = 0, last = -1; i < 256; i++) {
             	
             	if (last != pointer->freq[i]){ 
             		fprintf (fp_Freq, "%d", pointer->freq[i]);
             		last=pointer->freq[i];
             	}
             	
-            	if (i < 254 ) fprintf (fp_Freq, ";");
+            	if (i < 255 ) fprintf (fp_Freq, ";");
 				else fprintf (fp_Freq, "@");
 				
 			}
@@ -105,14 +107,14 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
 				
 				ffb->arrBlockRLE[block] = pointer->blockSizeRLE;
 				
-				for (i = 0, last = -1; i < 255; i++) {
+				for (i = 0, last = -1; i < 256; i++) {
 					
 					if (last != pointer->freqRLE[i]){ 
 						fprintf (fp_FreqRLE, "%d", pointer->freqRLE[i]);
 						last = pointer->freqRLE[i];
 					}
             		
-            		if (i < 254 ) fprintf (fp_FreqRLE, ";");
+            		if (i < 255 ) fprintf (fp_FreqRLE, ";");
 					else fprintf (fp_FreqRLE, "@");
 					
 				}
@@ -143,7 +145,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	int remainChar; 
 	
 	int block = 0;							// numero do bloco
-	if(checkCom==1) checkCom=0;
+	if(checkCom != 0) checkCom = 1;
 
 	int buffSize;							// ultima posicao usada no blockBuffer
 	int posBuff;  							// posicao blockBuffer
@@ -163,7 +165,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	auxSize = fread (auxBuffer, sizeof(char), 1024, fp_origin); 	// carregar o primeiro KB no auxBuffer
 	
 	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
-	for (i = 0; i < 255; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
+	for (i = 0; i < 256; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
 	
 	*freqList = newBFreq;
 	
@@ -172,6 +174,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 		
 		do{	
 			block++;
+			
 			// preparar o blockBuffer
 			// acrescentar os 63 KB ao blockBuffer (63*1024 + 1) + 1 KB do auxBuffer (0 -> 1023)
 			strcpy (blockBuffer, auxBuffer);
@@ -221,8 +224,12 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 					else 
 						rep++;
 				}
+				//printf ("%d %d %d \n", posBuff, posRLE, checkCompression(posBuff, posRLE));
+				//if (getch() == 'b') return -2;
 				if (block == 1 && checkCompression(posBuff, posRLE))  // testa se vale a pena aplicar a compressao ao resto do ficheiro
 					checkCom = 0;
+				else
+					newBFreq->blockSizeRLE = 0;
 				
 				if (checkCom == 0) {
 					// abrir o ficheiro para escrever o resultado da compressao RLE caso o ficheiro ainda nao esteja aberto
@@ -238,7 +245,6 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 							newBFreq->freqRLE [(int) blockRLE[i]]++;  // preencher a lista com as frequencias dos caracteres apos a compressao RLE
 						
 						newBFreq->blockSizeRLE = posRLE;  // colocar o tamanho do bloco com o resultado compressao
-						
 						posRLE = 0;
 					}
 					else {
@@ -252,9 +258,10 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 				newBFreq->blockSizeRLE = 0;
 			
 			// preenche a lista com as frequencias dos caracteres deste bloco
-			newBFreq->blockSize = posBuff;
+			newBFreq->blockSize = buffSize;
 			
 			for (i = 0; i < posBuff; i++){
+				//if ((unsigned char) blockBuffer[i] >= 254) {printf ("  -  %d  -  \n", (unsigned char) blockBuffer[i]); getch();}
 				newBFreq->freq [(unsigned char) blockBuffer[i]]++;
 			}
 			
@@ -262,13 +269,16 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 				newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
 				
 				newBFreq = newBFreq->next;
-				for (i = 0; i < 255; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
+				for (i = 0; i < 256; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
 			}
 			else {
 				newBFreq->next = NULL;
 			}
 		} while (!feof(fp_origin));
-		if (fileIsOpen) *compression = totalCompression (fp_origin, fp_RLE);
+		if (fileIsOpen){
+			*compression = totalCompression (fp_origin, fp_RLE);
+			fclose(fp_RLE);
+		}
 	}
 	else {   // contar frequencias nos 1024 iniciais (nao tem tamanho minimo de 1KB)
 		
@@ -283,7 +293,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	free(blockBuffer);
 	free(blockRLE);
 	
-	fclose (fp_RLE);
+	
 	
 	return block;
 }
@@ -309,8 +319,9 @@ void printModuloF (int block, char *source_file_Name, float time, float compress
 	
 	
 	printf ("\nTempo de execucao do modulo (milissegundos): %f\n", time);
-	printf ("Ficheiros gerados: %s%s", source_file_Name, ".rle");
+	printf ("Ficheiros gerados: %s%s", source_file_Name, ".freq");
 	if (ffb->rle == 1) printf (", %s%s\n", source_file_Name, ".rle.freq");
+	printf ("\n");
 }
 
 
@@ -323,7 +334,7 @@ int /*moduloF*/main (int argc, char **argv){
 	
 	if (source_file_Name){
 		
-		int i, arg1 = 0;
+		int i, arg1 = 1;
 		
 		float clockStart = clock();
 	    float clockEnd;
@@ -344,7 +355,7 @@ int /*moduloF*/main (int argc, char **argv){
 	    	
 	    	for (i = 2; i < argc; i += 2){
 	    		if(!strcmp(argv[i],"-c") && i+1 < argc && !strcmp(argv[i+1],"r"))		// "-c r"
-	    			arg1 = 1;
+	    			arg1 = 0;
 	    		
 	    		if(!strcmp(argv[i],"-b") && i+1 < argc) {
 	    			if(!strcmp(argv[i+1],"K"))				// "-b K"
@@ -373,15 +384,16 @@ int /*moduloF*/main (int argc, char **argv){
 			printf("Can't open %s\n", fileName);
 			return -2;
 	    }
+	    
 	    fclose(fp_origin);
-		
+	    
 	    // Reporta o tempo que demorou
 	    clockEnd = clock();
 	    time = ((clockEnd - clockStart)/CLOCKS_PER_SEC)*1000;
-	    
 	    printModuloF (nblocks, source_file_Name, time, compression, ffb);
 	    
 	    freeFFBout(ffb);
+	    
 	    return 0;
 	}
 	else {
@@ -390,5 +402,7 @@ int /*moduloF*/main (int argc, char **argv){
 	}
 
 }
+
+
 
 
