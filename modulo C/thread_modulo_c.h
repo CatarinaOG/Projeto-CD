@@ -8,7 +8,6 @@
 #include <time.h>
 #include <pthread.h>
 
-#define NUM_THREADS 4
 #define CHECK(x) if(!(x)) {return -1;printf("");}
 #define CBUFFER(x,buffer,fp) if (x == BREAD){fread(buffer,sizeof(unsigned char),BREAD,fp);c = 0;}  
 #define BREAD (1024*2)
@@ -24,7 +23,7 @@ typedef struct{
 
 typedef struct {
 	unsigned char *in,*out;
-	int *tblocos,*cblocos;
+	int *tblocos,*cblocos,bloco;
 	pdarr codes;
 } targ,*ptarg;  
 
@@ -34,6 +33,6 @@ int read(FILE *fp,int *tblocos,pdarr codes,unsigned char buffer[],int c);
 
 int makeTable(unsigned char* table,pdarr codes,int tam);
 
-float moduloC(char *path);
+int moduloC(char *path);
 
 #endif

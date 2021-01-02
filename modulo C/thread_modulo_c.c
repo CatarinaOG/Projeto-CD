@@ -1,16 +1,21 @@
 #include "thread_modulo_c.h"
 
+int pcount = 0;
+pthread_mutex_t mutex;
+FILE *fout;
+
 void print(char* name,int nblocos,float time,int *tblocos,int *cblocos){
 	float taxa = 0;
 
-	printf("Gonçalo Santos, a93279,Tiago Carneiro, a93207, MIEI/CD,\n");
+	printf("Gonçalo Santos, a93279,Tiago Carneiro, a93207, MIEI/CD,02-01-2021\n");
 	printf("Módulo: c (codificação dum ficheiro de símbolos)\n");
 	printf("Número de blocos: %d\n",nblocos);
 	for(int i = 0;i < nblocos; i++){
 		printf("Tamanho antes/depois & taxa de Compressão (bloco %d): %d/%d\n",i+1,tblocos[i*2],cblocos[i]);
-		taxa +=(float) cblocos[i]/tblocos[i*2]*100;
+		taxa +=1.f-((float) cblocos[i]/tblocos[i*2]);
+		printf("%f\n", taxa);
 	}
-	printf("Taxa de compressão global: %.0f%\n",(taxa/nblocos));
+	printf("Taxa de compressão global: %.0f%\n",(taxa > 0)?(taxa/nblocos)*100:0);
 	printf("Tempo de execução do módulo (milissegundos): %f\n",time);
 	printf("Ficheiro gerado: %s\n",name);
 }
@@ -109,16 +114,24 @@ void pencode(ptarg arg){
 	out[++n] = '\0';
 	arg->cblocos[0] = n;
 	free(table);
+
+	while(n != -1){
+		pthread_mutex_lock(&mutex);
+		if(pcount == arg->bloco){
+			fprintf(fout,"@%d@",n);
+			fwrite(out,sizeof(unsigned char),n,fout);
+			pcount++;
+			n = -1;
+		}
+		pthread_mutex_unlock(&mutex);
+	}
 }
 
-float moduloC(char *path){
+int moduloC(char *path){
 	unsigned char *name,**in = NULL,**out = NULL,*pathcod = NULL,*table = NULL,*line,buffer[BREAD];
-	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam,c = 0,max[NUM_THREADS];
-	pdarr codes[NUM_THREADS];
+	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam,c = 0;
 	clock_t t,t1;
-	FILE *fp,*fout,*fpcod;
-	pthread_t thread[NUM_THREADS];
-	ptarg thread_arg[NUM_THREADS];
+	FILE *fp,*fpcod;
 
 	t = clock();
 
@@ -138,12 +151,19 @@ float moduloC(char *path){
 	fscanf(fpcod,"@%*c@%d@",&nblocos);
 	fread(buffer,sizeof(unsigned char),BREAD,fpcod);
 	CHECK(tblocos = malloc(sizeof(int)*nblocos*2));
-	CHECK(in = malloc(sizeof(unsigned char*)*NUM_THREADS));
-	CHECK(out = malloc(sizeof(unsigned char*)*NUM_THREADS));
+	CHECK(in = malloc(sizeof(unsigned char*)*nblocos));
+	CHECK(out = malloc(sizeof(unsigned char*)*nblocos));
 	CHECK(cblocos = malloc(sizeof(int)*nblocos));
 	fprintf(fout,"@%d",nblocos);
 
-	for(int i = 0;i < NUM_THREADS && i<nblocos;i++){
+	int max[nblocos];
+	pdarr codes[nblocos];
+	pthread_t thread[nblocos];
+	ptarg thread_arg[nblocos];
+
+	pthread_mutex_init(&mutex,NULL);
+
+	for(int i = 0;i < nblocos && i<nblocos;i++){
 		CHECK(thread_arg[i] = malloc(sizeof(targ)));
 		max[i] = BREAD;
 		CHECK(in[i] = malloc(sizeof(unsigned char)*max[i]));
@@ -151,8 +171,8 @@ float moduloC(char *path){
 		CREATE_DARR(codes[i]);
 	}
 	
-	for(int i = 0;i<nblocos;i+=NUM_THREADS){
-		for(int j = 0;j<NUM_THREADS && j+i<nblocos;j++){
+	for(int i = 0;i<nblocos;i+=nblocos){
+		for(int j = 0;j<nblocos && j+i<nblocos;j++){
 			n = i+j;
 			c = read(fpcod,tblocos+2*n,codes[j],buffer,c);
 
@@ -169,20 +189,17 @@ float moduloC(char *path){
 			thread_arg[j]->out = out[j];
 			thread_arg[j]->tblocos = tblocos+n*2;
 			thread_arg[j]->cblocos = cblocos+n;
+			thread_arg[j]->bloco = n;
 
 			pthread_create(&(thread[j]),NULL,pencode,thread_arg[j]); 
 		}
-		for(int j = 0;j<NUM_THREADS && j+i<nblocos;j++){
-			pthread_join(thread[j],NULL);
-			fprintf(fout,"@%d@",cblocos[i+j]);
-			fwrite(out[j],sizeof(unsigned char),cblocos[i+j],fout);
-		}
+		pthread_join(thread[nblocos-1],NULL);
 	}
 	t1 = clock();
 	float time = (double)(t1-t) * 1000 / CLOCKS_PER_SEC;
 	print(name,nblocos,time,tblocos,cblocos);
 
-	for(int i = 0;i<NUM_THREADS;i++){
+	for(int i = 0;i<nblocos;i++){
 		free(thread_arg[i]);
 		free(in[i]);
 		free(out[i]);

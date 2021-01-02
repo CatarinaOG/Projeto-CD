@@ -1,5 +1,5 @@
 #include "./modulo D/modulo_d.h"
-#include "./modulo C/modulo_c.h"
+#include "./modulo C/thread_modulo_c.h"
 #include "./modulo F/modulo_f.h"
 #include "./modulo T/modulo_t.h"
  
