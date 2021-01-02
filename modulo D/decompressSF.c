@@ -130,7 +130,9 @@ int decompressSF(FILE *fp_shaf, FILE *fp_cod, FILE *fp_new1, FILE *fp_new2){
         CheckReturnValue(analisaBloco(fp_cod, &zero, &um));
 
         decompressBlockSF(buffer_shaf,buffer_new,tam_bloco_new,zero,um);
-        fwrite(buffer_new,sizeof(unsigned char),tam_bloco_new,fp_new1);        
+        fwrite(buffer_new,sizeof(unsigned char),tam_bloco_new,fp_new1);
+        
+        /* Aproveitamento do Buffer resultante da descompressão SF, para fazer a descompressao RLE */
         if(fp_new2) decompressBlockRLE(fp_new2,tam_bloco_new,buffer_new);
         else gravarTamanhoBloco(tam_bloco_new,&tam_depois,'D');
 
