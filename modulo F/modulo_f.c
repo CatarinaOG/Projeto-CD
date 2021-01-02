@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <conio.h>
 
 
 void freeFFBout (FFBout t){
@@ -224,15 +223,14 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 					else 
 						rep++;
 				}
-				//printf ("%d %d %d \n", posBuff, posRLE, checkCompression(posBuff, posRLE));
-				//if (getch() == 'b') return -2;
+				
 				if (block == 1 && checkCompression(posBuff, posRLE))  // testa se vale a pena aplicar a compressao ao resto do ficheiro
 					checkCom = 0;
 				else
 					newBFreq->blockSizeRLE = 0;
 				
 				if (checkCom == 0) {
-					// abrir o ficheiro para escrever o resultado da compressao RLE caso o ficheiro ainda nao esteja aberto
+					
 					if (!fileIsOpen)
 						fp_RLE = fopen (fileName, "wb");
 					
@@ -260,10 +258,8 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			// preenche a lista com as frequencias dos caracteres deste bloco
 			newBFreq->blockSize = buffSize;
 			
-			for (i = 0; i < posBuff; i++){
-				//if ((unsigned char) blockBuffer[i] >= 254) {printf ("  -  %d  -  \n", (unsigned char) blockBuffer[i]); getch();}
+			for (i = 0; i < posBuff; i++)
 				newBFreq->freq [(unsigned char) blockBuffer[i]]++;
-			}
 			
 			if (!feof(fp_origin)){
 				newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
@@ -292,8 +288,6 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	
 	free(blockBuffer);
 	free(blockRLE);
-	
-	
 	
 	return block;
 }
