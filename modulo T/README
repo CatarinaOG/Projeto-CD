@@ -1,0 +1,2 @@
+Comando: gcc shafa.c modulo_t.c ../encontraArgumento.c -o exe
+Executável: ./exe aaa.txt.freq -m t
