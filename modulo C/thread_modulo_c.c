@@ -13,7 +13,6 @@ void print(char* name,int nblocos,float time,int *tblocos,int *cblocos){
 	for(int i = 0;i < nblocos; i++){
 		printf("Tamanho antes/depois & taxa de Compressão (bloco %d): %d/%d\n",i+1,tblocos[i*2],cblocos[i]);
 		taxa +=1.f-((float) cblocos[i]/tblocos[i*2]);
-		printf("%f\n", taxa);
 	}
 	printf("Taxa de compressão global: %.0f%\n",(taxa > 0)?(taxa/nblocos)*100:0);
 	printf("Tempo de execução do módulo (milissegundos): %f\n",time);
@@ -129,8 +128,11 @@ void pencode(ptarg arg){
 
 int moduloC(char *path){
 	unsigned char *name,**in = NULL,**out = NULL,*pathcod = NULL,*table = NULL,*line,buffer[BREAD];
-	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam,c = 0;
+	int i,nblocos,*tblocos = NULL,*cblocos = NULL,off,n,tam,c = 0,max[NUM_THREADS];
 	clock_t t,t1;
+	pdarr codes[NUM_THREADS];
+	pthread_t thread[NUM_THREADS];
+	ptarg thread_arg[NUM_THREADS];
 	FILE *fp,*fpcod;
 
 	t = clock();
@@ -151,19 +153,15 @@ int moduloC(char *path){
 	fscanf(fpcod,"@%*c@%d@",&nblocos);
 	fread(buffer,sizeof(unsigned char),BREAD,fpcod);
 	CHECK(tblocos = malloc(sizeof(int)*nblocos*2));
-	CHECK(in = malloc(sizeof(unsigned char*)*nblocos));
-	CHECK(out = malloc(sizeof(unsigned char*)*nblocos));
+	CHECK(in = malloc(sizeof(unsigned char*)*NUM_THREADS));
+	CHECK(out = malloc(sizeof(unsigned char*)*NUM_THREADS));
 	CHECK(cblocos = malloc(sizeof(int)*nblocos));
 	fprintf(fout,"@%d",nblocos);
 
-	int max[nblocos];
-	pdarr codes[nblocos];
-	pthread_t thread[nblocos];
-	ptarg thread_arg[nblocos];
 
 	pthread_mutex_init(&mutex,NULL);
 
-	for(int i = 0;i < nblocos && i<nblocos;i++){
+	for(int i = 0;i < NUM_THREADS && i<nblocos;i++){
 		CHECK(thread_arg[i] = malloc(sizeof(targ)));
 		max[i] = BREAD;
 		CHECK(in[i] = malloc(sizeof(unsigned char)*max[i]));
@@ -171,8 +169,8 @@ int moduloC(char *path){
 		CREATE_DARR(codes[i]);
 	}
 	
-	for(int i = 0;i<nblocos;i+=nblocos){
-		for(int j = 0;j<nblocos && j+i<nblocos;j++){
+	for(int i = 0;i<NUM_THREADS;i+=NUM_THREADS){
+		for(int j = 0;j<NUM_THREADS && j+i<nblocos;j++){
 			n = i+j;
 			c = read(fpcod,tblocos+2*n,codes[j],buffer,c);
 
@@ -193,7 +191,7 @@ int moduloC(char *path){
 
 			pthread_create(&(thread[j]),NULL,pencode,thread_arg[j]); 
 		}
-		pthread_join(thread[nblocos-1],NULL);
+		for(int j = 0;j<NUM_THREADS && j+i <nblocos;j++) pthread_join(thread[i+j],NULL);
 	}
 	t1 = clock();
 	float time = (double)(t1-t) * 1000 / CLOCKS_PER_SEC;

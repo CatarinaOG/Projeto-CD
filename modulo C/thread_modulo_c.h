@@ -20,6 +20,8 @@ typedef struct{
 	*arr; // Array dinâmico onde são armazenados todos os codigos
 } darr,*pdarr;
 
+//Numero de threads que o programa cria
+#define NUM_THREADS 128
 //Cria o array dinâmico
 #define CREATE_DARR(x) CHECK(x = malloc(sizeof(darr)));x->tam = 1024;CHECK(x->arr = malloc(sizeof(unsigned char)*1024));
 //Realoca a memoria no array dinâmico 
@@ -32,6 +34,7 @@ typedef struct {
 	unsigned char *in, // Array por onde é lido o ficheiro original
 	*out; // Array por onde é escrito a array final
 	int *tblocos, // Valores pares deste array - tamanho do bloco ; Valores impares - tamanho maximo de um sibolo no bloco 
+	bloco,//bloco que o thread esta a processar
 	*cblocos; // Tamanho dos blocos depois de comprimido
 	pdarr codes; // Local onde é armazenado os codigos dos simbolos daquele bloco 
 } targ,*ptarg;  
