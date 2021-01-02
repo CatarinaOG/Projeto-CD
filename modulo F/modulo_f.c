@@ -15,8 +15,6 @@ void freeFFBout (FFBout t){
 void freeBFreq (BFreq t){
 	BFreq r;
 	while(t!=NULL){
-		free(t->freq);
-		free(t->freqRLE);
 		r = t->next;
 		free(t);
 		t = r;
@@ -165,8 +163,6 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	auxSize = fread (auxBuffer, sizeof(char), 1024, fp_origin); 	// carregar o primeiro KB no auxBuffer
 	
 	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
-	newBFreq->freq = (int*) malloc (sizeof (int) * 255);
-	newBFreq->freqRLE = (int*) malloc (sizeof (int) * 255);
 	for (i = 0; i < 255; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
 	
 	*freqList = newBFreq;
@@ -258,29 +254,18 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			// preenche a lista com as frequencias dos caracteres deste bloco
 			newBFreq->blockSize = posBuff;
 			
-			printf ("me block = %d\n", block);
-			//printf("%d \n\n", (int)(sizeof(struct blockfreq) + 2 * sizeof (int) * 255));
-			
 			for (i = 0; i < posBuff; i++){
-				newBFreq->freq [(unsigned char) blockBuffer[i]]++;// if (i > 60000)printf("%d -> %d\n",block,i);
+				newBFreq->freq [(unsigned char) blockBuffer[i]]++;
 			}
 			
 			if (!feof(fp_origin)){
-				printf ("me -> 1", block);
 				newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
 				
 				newBFreq = newBFreq->next;
-				printf (" 2");
-				newBFreq->freq = (int*) malloc (sizeof (int) * 255);
-				if (newBFreq->freq==NULL) printf (" --------------------------------- \n");
-				printf (" 3");
-				newBFreq->freqRLE = (int*) malloc (sizeof (int) * 255);
-				printf (" 4\n");
 				for (i = 0; i < 255; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
 			}
 			else {
 				newBFreq->next = NULL;
-				printf ("dddddddddddddddddddddddddddddddddddddddddddddd\n");
 			}
 		} while (!feof(fp_origin));
 		if (fileIsOpen) *compression = totalCompression (fp_origin, fp_RLE);
