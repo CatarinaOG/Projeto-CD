@@ -160,7 +160,7 @@ void shannonFano (Nodo lista , int start , int end){
         for (i=start ; i<indFreqMeio+1 ; i++)
             adiciona(0,lista,i);                               // Adiciona 0's à primeira parte da lista
         
-        for (i; i<end+1 ; i++)
+        for (; i<end+1 ; i++)
             adiciona(1,lista,i);                               // Adiciona 1's à segumda parte da lista
 
         shannonFano(lista,start,indFreqMeio);                  // Chamada recursiva para a primeira parte da lista
@@ -214,8 +214,7 @@ void escreveSeqBits (FILE *fp2 , struct simbolo simbolo){
 void escreveBloco (FILE *fp2 , Nodo lista){
 
     int i;
-    int j=0;
-    
+        
     for (i=0 ; i<255 ; i++){                    // Escreve todos os 255 simbolos + ";"
         escreveSeqBits(fp2, lista[i]);
         fprintf(fp2,";");
@@ -234,7 +233,7 @@ void escreveTamBloco (FILE *fp2 , int tamBloco){
 // Escreve as informações do trabalho na consola 
 void textoDeConsola (char orig_rle , float time , int nrBlocos , int *tamBlocos , char *filename){
 
-    int i,j=0;
+    int i;
 
     printf("Ana Catarina a93259 , MIEI/CD, 3-Janeiro-2021\nMafalda Costa a83919 , MIEI/CD, 3-Janeiro-2021\n");
     printf("Módulo: t (cálculo dos códigos dos símbolos)\n");
@@ -325,6 +324,10 @@ int moduloT (char *file){
     // Fecha os ficheiros, tanto o de leitura como o de escrita
     fclose(fp);
     fclose(fp2);
+    
+    for (int k=0 ; k<256 ; k++)
+    free(listaStruct[k].bits);
+    
     free(listaStruct);
     free(tamBlocos);
 

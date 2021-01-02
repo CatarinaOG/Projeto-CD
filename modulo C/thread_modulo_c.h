@@ -8,7 +8,6 @@
 #include <time.h>
 #include <pthread.h>
 
-#define NUM_THREADS 4
 #define CHECK(x) if(!(x)) {return -1;printf("");}
 #define CBUFFER(x,buffer,fp) if (x == BREAD){fread(buffer,sizeof(unsigned char),BREAD,fp);c = 0;}  
 #define BREAD (1024*2)
@@ -29,6 +28,7 @@ typedef struct{
 #define DEL_DARR(x) free(x->arr);free(x);
 
 typedef struct {
+
 	unsigned char *in, // Array por onde é lido o ficheiro original
 	*out; // Array por onde é escrito a array final
 	int *tblocos, // Valores pares deste array - tamanho do bloco ; Valores impares - tamanho maximo de um sibolo no bloco 
@@ -47,8 +47,6 @@ int read(FILE *fp,int *tblocos,pdarr codes,unsigned char buffer[],int c);
 //Função que cria uma matriz de codigos utilizando os offsets
 int makeTable(unsigned char* table,pdarr codes,int tam);
 
-
 //Função que utilizada todas as funções anteriores de forma a comprimir o ficheiro utilizando o metodo shannon-fano
-float moduloC(char *path);
-
+int moduloC(char *path);
 #endif

@@ -1,15 +1,5 @@
 #include "SF_RLE_common.h"
 
-/********** Ler input **********/
-
-int encontrouArgumento(char *arg, char argc, char *argv[]){
-    int i = 2;
-    for(;i < argc;i++) 
-        if(!strcmp(arg,argv[i]))
-            return i;
-    return -1;
-}
-
 /********** Ficheiros **********/
 
 void closeFiles (FILE *lista_fps[], int nr_fps){ 

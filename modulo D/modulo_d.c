@@ -12,7 +12,7 @@ void printModuloD(){
     int i = 0;
     printf("\nAlexandre Martins, a93315, MIEI/CD\n");
     printf("Gabriela Prata, a93288, MIEI/CD\n");
-    printf("Data: 16-dez-2020\nMódulo: d (descodificação dum ficheiro shaf)\n");
+    printf("Data: 16-dez-2020\nMódulo: d (descodificação de um ficheiro (RLE/Shannon-Fano))\n");
     printf("Número de blocos: %d\n",nr_blocos);
     for(;i < nr_blocos; i++)
         printf("Tamanho antes/depois do ficheiro gerado (bloco %d): %d/%d\n",i,tam_antes[i],tam_depois[i]);
@@ -111,19 +111,4 @@ void moduloD(int argc, char *argv[]){
     if(r) printModuloD();
 
     free(tam_antes); free(tam_depois); free(path_final);
-}
-
-int main(int argc, char *argv[]) {
-    if(argc > 1){   
-        /* posicao indice 1 tem de estar o pathFile */
-        int index;
-        if((index = encontrouArgumento("-m",argc,argv)) != -1){
-            if(++index < argc){
-                char *str = argv[index]; 
-                if(!strcmp("d",str)) moduloD(argc,argv);
-            }
-        }
-    }
-    else printf("Comando inválido! Utilize o comando \"shafa --help\" para mais informação.\n");
-    return 0;
 }

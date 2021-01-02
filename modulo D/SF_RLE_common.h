@@ -2,6 +2,7 @@
 #define SF_RLE_COMMON
 
 #include "SF_RLE_common.h"
+#include "../encontraArgumento.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,10 +12,6 @@
 #define CheckPointer(x) if(!(x)) { printf("Erro: Não foi possível alocar espaço...\n"); return 0;}
 #define CheckReturnValue(x) if(!(x)) return 0; /* É usada para dar return value 0 em funções dependentes do sucesso de outras */
 #define CheckFile(fp,lista_fps,nr_fps,path) if(!(fp)) { closeFiles(lista_fps,nr_fps); printf("Erro: Não foi possível abrir o ficheiro (%s)...\n",path); return 0; }
-
-int encontrouArgumento(char *arg, 
-                       char argc, 
-                       char *argv[]);
 
 void closeFiles (FILE *lista_fps[], 
                  int nr_fps);
