@@ -2,7 +2,7 @@
 
 /********** Ler input **********/
 
-int encontrouArgumento(char *arg, char argc, char *argv[]){
+int encontrouArgumento(char *arg, int argc, char *argv[]){
     int i = 2;
     for(;i < argc;i++) 
         if(!strcmp(arg,argv[i]))
