@@ -198,13 +198,15 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 				for (posBuff = 1; posBuff < buffSize; posBuff++){   // ciclo onde executa a compressao
 					
 					remainChar--;
+					(254)000
+					(254 0)00
 					
-					if (repChar != blockBuffer[posBuff] || remainChar == 1) {
+					if (repChar != blockBuffer[posBuff] || remainChar == 1 || rep == 254) {
 						if (repChar == blockBuffer[posBuff])
 							rep++;
 						
-						if (rep >= 4 || repChar == 0 || rep >= 255 ){
-							blockRLE[posRLE++] = 0;			
+						if (rep >= 4 || repChar == 0){
+							blockRLE[posRLE++] = 0;	
 							blockRLE[posRLE++] = repChar;
 							blockRLE[posRLE++] = rep;
 						}
@@ -216,8 +218,12 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 						if (remainChar == 1 && repChar != blockBuffer[posBuff])
 							blockRLE[posRLE++] = blockBuffer[posBuff];
 						else{
-							rep = 1;
-							repChar = blockBuffer[posBuff];
+							if (rep == 255)
+								rep == 0;
+							else{
+								rep = 1;
+								repChar = blockBuffer[posBuff];
+							}
 						}
 					}
 					else 
