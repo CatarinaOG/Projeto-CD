@@ -58,9 +58,9 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
     
     fp_Freq = fopen (strcat (fileName2,".freq"), "wb");
     
-    FFBout ffb = (FFBout) malloc(sizeof(struct freqFileBuild_output));
-    ffb->arrBlock    = (int*) malloc (sizeof(int) * nblock);
-    ffb->arrBlockRLE = (int*) malloc (sizeof(int) * nblock);
+    FFBout ffb = (FFBout) calloc(sizeof(struct freqFileBuild_output));
+    ffb->arrBlock    = (int*) calloc (sizeof(int) * nblock);
+    ffb->arrBlockRLE = (int*) calloc (sizeof(int) * nblock);
     ffb->rle = 0;
 	
     if (fp_Freq != NULL) {
@@ -149,21 +149,21 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	int buffSize;							// ultima posicao usada no blockBuffer
 	int posBuff;  							// posicao blockBuffer
 	unsigned char *blockBuffer;  					// bloco analisado
-	blockBuffer = (unsigned char*) malloc (sizeof(unsigned char) * blockSizeMultiple + 1025);
+	blockBuffer = (unsigned char*) calloc (sizeof(unsigned char) * blockSizeMultiple + 1025);
 	
 	int auxSize;							// ultima posicao usada no blockBuffer
 	char auxBuffer [1025];  				// auxiliar para o blockBuffer
 	
 	int posRLE = 0; 						// posicao blockRLE
 	unsigned char *blockRLE;  						// bloco com o resultado da compressao RLE
-	blockRLE = (unsigned char*) malloc (sizeof(unsigned char) * (2*blockSizeMultiple));
+	blockRLE = (unsigned char*) calloc (sizeof(unsigned char) * (2*blockSizeMultiple));
 	
 	int fileIsOpen = 0; 	// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
 	
 	FILE *fp_RLE;
 	auxSize = fread (auxBuffer, sizeof(unsigned char), 1024, fp_origin); 	// carregar o primeiro KB no auxBuffer
 	
-	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
+	BFreq newBFreq = (BFreq) calloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
 	for (i = 0; i < 256; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
 	
 	*freqList = newBFreq;
@@ -266,7 +266,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 				newBFreq->freq [(unsigned char) blockBuffer[i]]++;
 			
 			if (!feof(fp_origin)){
-				newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
+				newBFreq->next = (BFreq) calloc (sizeof (struct blockfreq));
 				
 				newBFreq = newBFreq->next;
 				for (i = 0; i < 256; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
@@ -326,7 +326,7 @@ void printModuloF (int block, char *source_file_Name, float time, float compress
 
 // "-c r"      -> 0| 1(std)  (possibilidade de obrigatoriamente realizar a compressao)
 // "-b K|m|M"  -> 1(640Kb) | 2(8Mb) | 3(64Mb)
-int /*moduloF*/main (int argc, char **argv){
+int moduloF (int argc, char **argv){
 	
 	char *source_file_Name = argv[1];
 	
