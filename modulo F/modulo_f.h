@@ -23,8 +23,8 @@ typedef struct freqFileBuild_output {
 
 
 // Esta funcao vai retornar 0 se correr ate ao fim sem erros.
-// A funcao cria e escreve o ficheiro RLE, se for forçado ou se a compressão do primeiro bloco não for menor que 5%. e cria a lista de struct freqList, para otimizar .
-// 
+// A funcao cria e escreve o ficheiro RLE, se for forçado ou se a compressão do primeiro bloco não for menor que 5%. e cria a lista de struct freqList, para otimizar 
+//   a criação dos ficheiros freq e freq.RLE.
 int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int checkCom, int blockSizeMultiple, float *compression);
 
 // Esta funcao vai retornar 0 se correr ate ao fim sem erros e -2.
