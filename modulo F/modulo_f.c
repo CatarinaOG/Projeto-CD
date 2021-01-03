@@ -148,20 +148,20 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 
 	int buffSize;							// ultima posicao usada no blockBuffer
 	int posBuff;  							// posicao blockBuffer
-	char *blockBuffer;  					// bloco analisado
-	blockBuffer = (char*) malloc (sizeof(char) * blockSizeMultiple + 1025);
+	unsigned char *blockBuffer;  					// bloco analisado
+	blockBuffer = (unsigned char*) malloc (sizeof(unsigned char) * blockSizeMultiple + 1025);
 	
 	int auxSize;							// ultima posicao usada no blockBuffer
 	char auxBuffer [1025];  				// auxiliar para o blockBuffer
 	
 	int posRLE = 0; 						// posicao blockRLE
-	char *blockRLE;  						// bloco com o resultado da compressao RLE
-	blockRLE = (char*) malloc (sizeof(char) * (2*blockSizeMultiple));
+	unsigned char *blockRLE;  						// bloco com o resultado da compressao RLE
+	blockRLE = (unsigned char*) malloc (sizeof(unsigned char) * (2*blockSizeMultiple));
 	
 	int fileIsOpen = 0; 	// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
 	
 	FILE *fp_RLE;
-	auxSize = fread (auxBuffer, sizeof(char), 1024, fp_origin); 	// carregar o primeiro KB no auxBuffer
+	auxSize = fread (auxBuffer, sizeof(unsigned char), 1024, fp_origin); 	// carregar o primeiro KB no auxBuffer
 	
 	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
 	for (i = 0; i < 256; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
@@ -177,10 +177,10 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			// preparar o blockBuffer
 			// acrescentar os 63 KB ao blockBuffer (63*1024 + 1) + 1 KB do auxBuffer (0 -> 1023)
 			strcpy (blockBuffer, auxBuffer);
-			buffSize = auxSize + fread (blockBuffer + 1024, sizeof(char), blockSizeMultiple - 1024, fp_origin);
+			buffSize = auxSize + fread (blockBuffer + 1024, sizeof(unsigned char), blockSizeMultiple - 1024, fp_origin);
 			if (buffSize == blockSizeMultiple){  // caso em que e possivel que o fcheiro acabe no proximo KB
 				
-				auxSize = fread (auxBuffer, sizeof(char), 1024, fp_origin);
+				auxSize = fread (auxBuffer, sizeof(unsigned char), 1024, fp_origin);
 				
 				if (auxSize != 1024){  // caso acabe no proximo KB
 					strcpy (blockBuffer + blockSizeMultiple, auxBuffer);
@@ -198,8 +198,6 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 				for (posBuff = 1; posBuff < buffSize; posBuff++){   // ciclo onde executa a compressao
 					
 					remainChar--;
-					(254)000
-					(254 0)00
 					
 					if (repChar != blockBuffer[posBuff] || remainChar == 1 || rep == 254) {
 						if (repChar == blockBuffer[posBuff])
@@ -219,7 +217,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 							blockRLE[posRLE++] = blockBuffer[posBuff];
 						else{
 							if (rep == 255)
-								rep == 0;
+								rep = 0;
 							else{
 								rep = 1;
 								repChar = blockBuffer[posBuff];
@@ -243,7 +241,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 					if (fp_RLE) {
 						fileIsOpen = 1;
 						
-						fwrite (blockRLE, sizeof(char), posRLE, fp_RLE);  // escrever o resultado da compressao do bloco no ficheiro RLE
+						fwrite (blockRLE, sizeof(unsigned char), posRLE, fp_RLE);  // escrever o resultado da compressao do bloco no ficheiro RLE
 						
 						for (i = 0; i < posRLE; i++)
 							newBFreq->freqRLE [(int) blockRLE[i]]++;  // preencher a lista com as frequencias dos caracteres apos a compressao RLE
@@ -264,7 +262,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			// preenche a lista com as frequencias dos caracteres deste bloco
 			newBFreq->blockSize = buffSize;
 			
-			for (i = 0; i < posBuff; i++)
+			for (i = 0; i < buffSize; i++)
 				newBFreq->freq [(unsigned char) blockBuffer[i]]++;
 			
 			if (!feof(fp_origin)){
