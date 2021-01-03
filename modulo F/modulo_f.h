@@ -21,6 +21,18 @@ typedef struct freqFileBuild_output {
 	int *arrBlockRLE;
 } *FFBout;
 
+// Esta função auxiliar vai libertar a lista de struct freqFileBuild_output.
+void freeFFBout (FFBout t);
+
+// Esta função auxiliar vai libertar a lista de struct blockfreq.
+void freeBFreq (BFreq t);
+
+// Se esta funcao retornar 0, a compressão RLE vai ser ignorada e se retornar 1 a compressão RLE é realizada.
+// Esta função auxiliar vai calcular a compressão.
+int checkCompression (float source,float result);
+
+//Esta função auxiliar vai calcular e retornar a compressão.
+float totalCompression (FILE *fp_origin, FILE *fp_RLE);
 
 // Esta funcao vai retornar o endereço de uma lista freqFileBuild_output se correr ate ao fim sem erros e 0 se ocorrer um erro.
 // A funcao cria e escreve o ficheiro RLE, se for forçado ou se a compressão do primeiro bloco não for menor que 5%. e cria a lista de struct freqList, para otimizar 
