@@ -2,7 +2,6 @@
 #include "./modulo C/thread_modulo_c.h"
 #include "./modulo F/modulo_f.h"
 #include "./modulo T/modulo_t.h"
-#include "encontrouArgumento.h"
 
 int main(int argc, char *argv[]) {
     if(argc > 1){   
