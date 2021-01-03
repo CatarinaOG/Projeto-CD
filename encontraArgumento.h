@@ -4,7 +4,7 @@
 #include <string.h>
 
 int encontrouArgumento(char *arg, 
-                       char argc, 
+                       int argc, 
                        char *argv[]);
 
 #endif

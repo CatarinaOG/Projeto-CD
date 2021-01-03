@@ -1,8 +1,12 @@
-#include "./modulo D/modulo_d.h"
-#include "./modulo C/thread_modulo_c.h"
-#include "./modulo F/modulo_f.h"
-#include "./modulo T/modulo_t.h"
-#include "encontrouArgumento.h"
+#include "modulo_f.h"
+
+int encontrouArgumento(char *arg, int argc, char *argv[]){
+    int i = 2;
+    for(;i < argc;i++) 
+        if(!strcmp(arg,argv[i]))
+            return i;
+    return -1;
+}
 
 int main(int argc, char *argv[]) {
     if(argc > 1){   
@@ -11,10 +15,7 @@ int main(int argc, char *argv[]) {
         if((index = encontrouArgumento("-m",argc,argv)) != -1){
             if(++index < argc){
                 char *str = argv[index]; 
-                if(!strcmp("d",str)) moduloD(argc,argv);
-                else if(!strcmp("t",str)) moduloT(argv[1]);
-                else if(!strcmp("c",str)) moduloC(argc,argv);
-                else if(!strcmp("f",str)) moduloF(argc,argv); 
+                if(!strcmp("f",str)) moduloF(argc,argv); 
             }
         }
     }
