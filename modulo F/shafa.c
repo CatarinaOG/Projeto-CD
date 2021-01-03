@@ -1,4 +1,5 @@
-#include "../encontrouArgumento.h"
+#include "../encontraArgumento.h"
+#include "modulo_f.h"
 
 int main(int argc, char *argv[]) {
     if(argc > 1){   

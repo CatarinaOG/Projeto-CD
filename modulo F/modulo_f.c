@@ -58,9 +58,9 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
     
     fp_Freq = fopen (strcat (fileName2,".freq"), "wb");
     
-    FFBout ffb = (FFBout) calloc(sizeof(struct freqFileBuild_output));
-    ffb->arrBlock    = (int*) calloc (sizeof(int) * nblock);
-    ffb->arrBlockRLE = (int*) calloc (sizeof(int) * nblock);
+    FFBout ffb = (FFBout) malloc(sizeof(struct freqFileBuild_output));
+    ffb->arrBlock    = (int*) malloc (sizeof(int) * nblock);
+    ffb->arrBlockRLE = (int*) malloc (sizeof(int) * nblock);
     ffb->rle = 0;
 	
     if (fp_Freq != NULL) {
@@ -124,9 +124,9 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
 			printf("Can't open %s\n", fileName2);
 			return NULL;
 		}
+		fclose(fp_FreqRLE);
     }
 	
-    fclose(fp_FreqRLE);
     fclose(fp_Freq);
 	
     return ffb;
@@ -149,21 +149,21 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	int buffSize;							// ultima posicao usada no blockBuffer
 	int posBuff;  							// posicao blockBuffer
 	unsigned char *blockBuffer;  					// bloco analisado
-	blockBuffer = (unsigned char*) calloc (sizeof(unsigned char) * blockSizeMultiple + 1025);
+	blockBuffer = (unsigned char*) malloc (sizeof(unsigned char) * blockSizeMultiple + 1025);
 	
 	int auxSize;							// ultima posicao usada no blockBuffer
 	char auxBuffer [1025];  				// auxiliar para o blockBuffer
 	
 	int posRLE = 0; 						// posicao blockRLE
 	unsigned char *blockRLE;  						// bloco com o resultado da compressao RLE
-	blockRLE = (unsigned char*) calloc (sizeof(unsigned char) * (2*blockSizeMultiple));
+	blockRLE = (unsigned char*) malloc (sizeof(unsigned char) * (2*blockSizeMultiple));
 	
 	int fileIsOpen = 0; 	// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
 	
 	FILE *fp_RLE;
 	auxSize = fread (auxBuffer, sizeof(unsigned char), 1024, fp_origin); 	// carregar o primeiro KB no auxBuffer
 	
-	BFreq newBFreq = (BFreq) calloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
+	BFreq newBFreq = (BFreq) malloc (sizeof (struct blockfreq)); 	// auxiliar para criar a freqList
 	for (i = 0; i < 256; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
 	
 	*freqList = newBFreq;
@@ -266,7 +266,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 				newBFreq->freq [(unsigned char) blockBuffer[i]]++;
 			
 			if (!feof(fp_origin)){
-				newBFreq->next = (BFreq) calloc (sizeof (struct blockfreq));
+				newBFreq->next = (BFreq) malloc (sizeof (struct blockfreq));
 				
 				newBFreq = newBFreq->next;
 				for (i = 0; i < 256; i++) { newBFreq->freq[i] = 0; newBFreq->freqRLE[i] = 0; }
@@ -281,13 +281,10 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 		}
 	}
 	else {   // contar frequencias nos 1024 iniciais (nao tem tamanho minimo de 1KB)
-		
-		newBFreq->next = NULL;
-		newBFreq->blockSizeRLE = 0;
-		newBFreq->blockSize = auxSize;
-		
-		for (i = 0; i < auxSize + 1; i++)
-			newBFreq->freq [(int) auxBuffer[i]]++;
+
+		freeBFreq(newBFreq);
+		printf("O ficheiro não tem tamanho suficiente.\n");
+		return -2;
 	}
 	
 	free(blockBuffer);
