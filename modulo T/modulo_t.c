@@ -271,10 +271,10 @@ int moduloT (char *file){
     float time;
     int nrBlocos , i ,j;
     char origRle;
-    struct simbolo *listaStruct;
-    int *tamBlocos;
+    struct simbolo *listaStruct = NULL;
+    int *tamBlocos = NULL;
     int end;
-    char *filename;
+    char *filename = NULL;
 
    
     FILE *fp;                                   // Abre o ficheiro freq
