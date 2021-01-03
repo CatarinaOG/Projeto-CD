@@ -22,15 +22,19 @@ typedef struct freqFileBuild_output {
 } *FFBout;
 
 
-// Esta funcao vai retornar 0 se correr ate ao fim sem erros.
+// Esta funcao vai retornar o endereço de uma lista freqFileBuild_output se correr ate ao fim sem erros e 0 se ocorrer um erro.
 // A funcao cria e escreve o ficheiro RLE, se for forçado ou se a compressão do primeiro bloco não for menor que 5%. e cria a lista de struct freqList, para otimizar 
 //   a criação dos ficheiros freq e freq.RLE.
 int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int checkCom, int blockSizeMultiple, float *compression);
 
-// Esta funcao vai retornar 0 se correr ate ao fim sem erros e -2.
+// Esta funcao vai retornar 0 se correr ate ao fim sem erros e -2 se ocorrer um erro.
 // A funcao cria e escreve os ficheiros freq e RLE.freq.
 // Para isso, ela vai usar a lista de struct freqList e o número de blocks, criada e obtido na função "applyRLECompression".
 FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName);
+
+// A funcao escreve no terminal as informções requiridas pelos docentes.
+// Para isso, ela vai usar a lista de struct freqFileBuild_output e o número de blocks, criada e obtido e na função freqFileBuild na função "applyRLECompression", respetivamente.
+void printModuloF (int block, char *source_file_Name, float time, float compressao, FFBout ffb);
 
 // Esta funcao vai retornar 0 se correr ate ao fim sem erros.
 // A funcao vai fazer a compressao RLE, escrever no ficheiro as frequencias.
