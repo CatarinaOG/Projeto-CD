@@ -149,14 +149,14 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	int buffSize;							// ultima posicao usada no blockBuffer
 	int posBuff;  							// posicao blockBuffer
 	unsigned char *blockBuffer;  					// bloco analisado
-	blockBuffer = (unsigned char*) malloc (sizeof(unsigned char) * blockSizeMultiple + 1025);
+	blockBuffer = (unsigned char*) malloc (blockSizeMultiple + 1025);
 	
 	int auxSize;							// ultima posicao usada no blockBuffer
 	char auxBuffer [1025];  				// auxiliar para o blockBuffer
 	
 	int posRLE = 0; 						// posicao blockRLE
-	unsigned char *blockRLE;  						// bloco com o resultado da compressao RLE
-	blockRLE = (unsigned char*) malloc (sizeof(unsigned char) * (2*blockSizeMultiple));
+	unsigned char *blockRLE;  				// bloco com o resultado da compressao RLE
+	blockRLE = (unsigned char*) malloc (2*blockSizeMultiple);
 	
 	int fileIsOpen = 0; 	// variavel auxiliar que indica se o "ficheiro.rle" ja foi aberto 
 	
@@ -176,14 +176,14 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			
 			// preparar o blockBuffer
 			// acrescentar os 63 KB ao blockBuffer (63*1024 + 1) + 1 KB do auxBuffer (0 -> 1023)
-			strcpy (blockBuffer, auxBuffer);
-			buffSize = auxSize + fread (blockBuffer + 1024, sizeof(unsigned char), blockSizeMultiple - 1024, fp_origin);
+			for (i = 0; i < 1024;i++) blockBuffer[i] = auxBuffer[i];
+			buffSize = auxSize + fread (&(blockBuffer[1024]), sizeof(unsigned char), blockSizeMultiple - 1024, fp_origin);
 			if (buffSize == blockSizeMultiple){  // caso em que e possivel que o fcheiro acabe no proximo KB
 				
 				auxSize = fread (auxBuffer, sizeof(unsigned char), 1024, fp_origin);
 				
 				if (auxSize != 1024){  // caso acabe no proximo KB
-					strcpy (blockBuffer + blockSizeMultiple, auxBuffer);
+				for (i = blockSizeMultiple; i < 1024+blockSizeMultiple;i++) blockBuffer[i] = auxBuffer[i];
 					buffSize += auxSize;
 				}
 			}
@@ -313,7 +313,7 @@ void printModuloF (int block, char *source_file_Name, float time, float compress
 	}
 	
 	
-	printf ("\nTempo de execucao do modulo (milissegundos): %f\n", time);
+	printf ("\nTempo de execucao do modulo (milissegundos): %.03f\n", time);
 	printf ("Ficheiros gerados: %s%s", source_file_Name, ".freq");
 	if (ffb->rle == 1) printf (", %s%s\n", source_file_Name, ".rle.freq");
 	printf ("\n");
@@ -383,8 +383,7 @@ int moduloF (int argc, char **argv){
 	    fclose(fp_origin);
 	    
 	    // Reporta o tempo que demorou
-	    clockEnd = clock();
-	    time = ((clockEnd - clockStart)/CLOCKS_PER_SEC)*1000;
+	    time = (clock() - clockStart)/CLOCKS_PER_SEC * 1000;
 	    printModuloF (nblocks, source_file_Name, time, compression, ffb);
 	    
 	    freeFFBout(ffb);

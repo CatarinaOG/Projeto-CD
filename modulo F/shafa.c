@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
         int index;
         if((index = encontrouArgumento("-m",argc,argv)) != -1){
             if(++index < argc){
-                char *str = argv[index]; 
+                char *str = argv[index];
                 if(!strcmp("f",str)) moduloF(argc,argv); 
             }
         }
