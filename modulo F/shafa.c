@@ -1,12 +1,4 @@
-#include "modulo_f.h"
-
-int encontrouArgumento(char *arg, int argc, char *argv[]){
-    int i = 2;
-    for(;i < argc;i++) 
-        if(!strcmp(arg,argv[i]))
-            return i;
-    return -1;
-}
+#include "../encontrouArgumento.h"
 
 int main(int argc, char *argv[]) {
     if(argc > 1){   
