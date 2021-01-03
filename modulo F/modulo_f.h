@@ -33,7 +33,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName);
 
 // A funcao escreve no terminal as informções requiridas pelos docentes.
-// Para isso, ela vai usar a lista de struct freqFileBuild_output e o número de blocks, criada e obtido e na função freqFileBuild na função "applyRLECompression", respetivamente.
+// Para isso, ela vai usar a lista de struct freqFileBuild_output e o número de blocks, criada e obtido na função freqFileBuild e na função "applyRLECompression", respetivamente.
 void printModuloF (int block, char *source_file_Name, float time, float compressao, FFBout ffb);
 
 // Esta funcao vai retornar 0 se correr ate ao fim sem erros.
