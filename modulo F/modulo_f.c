@@ -326,7 +326,7 @@ void printModuloF (int block, char *source_file_Name, float time, float compress
 
 // "-c r"      -> 0| 1(std)  (possibilidade de obrigatoriamente realizar a compressao)
 // "-b K|m|M"  -> 1(640Kb) | 2(8Mb) | 3(64Mb)
-int main (int argc, char **argv){
+int moduloF (int argc, char **argv){
 	
 	char *source_file_Name = argv[1];
 	
