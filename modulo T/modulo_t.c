@@ -69,8 +69,8 @@ struct simbolo* converte1blocoData (FILE *fp, int bloco , int *tamBlocos){
             listaStruct[i].valor=i;
             (listaStruct[i]).bits = (int*)malloc(sizeof(int)*256);
             (listaStruct[i]).fp = -1;
-
-            fseek(fp,1,SEEK_CUR);                   // Avança o ";" depois de preenchido a estrutura do simbolo
+            c = fgetc(fp);
+            if(c == '@') fseek(fp,-1,SEEK_CUR);                   // Avança o ";" depois de preenchido a estrutura do simbolo
         }
         
     }
