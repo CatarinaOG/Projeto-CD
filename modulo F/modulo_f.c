@@ -46,7 +46,7 @@ float totalCompression (FILE *fp_origin, FILE *fp_RLE){
 
 
 
-FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName, float clockStart) {
+FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
 	
     int i, block, last = -1;
     BFreq pointer;
@@ -137,7 +137,7 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName, float clockSta
 
 int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int checkCom, int blockSizeMultiple, float *compression){
 	
-	int i,g_rle=0;
+	int i;
 	
 	int rep;					// repeticoes de um caracter consecutivas
 	unsigned char repChar;		// caracter analizado
@@ -168,8 +168,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	
 	*freqList = newBFreq;
 	
-	
-	if (auxSize == 1024 || checkCom == 0){  // comecar a compressao caso tenha mais de 1 KB
+	if (auxSize == 1024){  // comecar a compressao caso tenha mais de 1 KB
 		
 		do{
 			block++;
@@ -245,7 +244,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 						fileIsOpen = 1;
 						
 						fwrite (blockRLE, sizeof(unsigned char), posRLE, fp_RLE);  // escrever o resultado da compressao do bloco no ficheiro RLE
-						for (i = 0; i < 256; i++) newBFreq->freqRLE[i] = 0;
+						
 						for (i = 0; i < posRLE; i++)
 							newBFreq->freqRLE [(unsigned char) blockRLE[i]]++;  // preencher a lista com as frequencias dos caracteres apos a compressao RLE
 						
@@ -264,7 +263,7 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 			
 			// preenche a lista com as frequencias dos caracteres deste bloco
 			newBFreq->blockSize = buffSize;
-			for (i = 0; i < 256; i++) newBFreq->freq[i] = 0;
+			
 			for (i = 0; i < buffSize; i++){
 				newBFreq->freq [(unsigned char) blockBuffer[i]]++;
 			}
@@ -286,12 +285,9 @@ int applyRLECompression (FILE *fp_origin, BFreq *freqList, char *fileName, int c
 	}
 	else {   // contar frequencias nos 1024 iniciais (nao tem tamanho minimo de 1KB)
 		
-		newBFreq->next = NULL;
-		newBFreq->blockSizeRLE = 0;
-		newBFreq->blockSize = auxSize;
-		
-		for (i = 0; i < auxSize + 1; i++)
-			newBFreq->freq [(int) auxBuffer[i]]++;
+		free(newBFreq);
+		printf("O ficheiro não tem tamanho suficiente.\n");
+		return -2;
 	}
 	
 	free(blockBuffer);
@@ -377,7 +373,7 @@ int moduloF (int argc, char **argv){
 			strcpy (fileName, source_file_Name); // super importante pois a string fileName ficou danificada ao ser usada!!!!   ->    file.txt -> file.txt.rle
 			
 	    	// criar o ficheiro com as frequencias dos caracteres no ficheiro original (e realizado independentemente da situacao)
-			ffb = freqFileBuild (freqList, nblocks, fileName, clockStart);
+			ffb = freqFileBuild (freqList, nblocks, fileName);
 			if (ffb == NULL) return -2;
 			
 			freeBFreq(freqList);
