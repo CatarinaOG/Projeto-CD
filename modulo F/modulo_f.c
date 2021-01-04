@@ -56,7 +56,7 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
     
     fp_Freq = fopen (strcat (fileName2,".freq"), "wb");
     
-    
+
     FFBout ffb = (FFBout) malloc(sizeof(struct freqFileBuild_output));
     ffb->arrBlock    = (int*) malloc (sizeof(int) * nblock);
     ffb->arrBlockRLE = (int*) malloc (sizeof(int) * nblock);
@@ -123,9 +123,9 @@ FFBout freqFileBuild (BFreq freqList, int nblock, char *fileName) {
 			printf("Can't open %s\n", fileName2);
 			return NULL;
 		}
+		fclose(fp_FreqRLE);
     }
 	
-    fclose(fp_FreqRLE);
     fclose(fp_Freq);
 	
     return ffb;
