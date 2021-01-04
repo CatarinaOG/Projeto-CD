@@ -43,13 +43,15 @@ void copiaFreqAnterior (Nodo listaStruct , int i){
 // Converte 1 bloco do ficheiro de leitura em data do tipo:
 // [ (valor_simb0;freq_simb0;bits_simb0;fp0) ; (valor_simb1;freq_simb1;bits_simb1;fp1) ; ...]
 struct simbolo* converte1blocoData (FILE *fp, int bloco , int *tamBlocos){
-    int i,c;
+    int i,c,n;
 
     struct simbolo *listaStruct; 
     listaStruct = (Nodo) malloc (sizeof(struct simbolo) * 256);    //Guarda espaço na lista para todos os 256 simbolos
 
 
-    fscanf(fp,"@%d@", &tamBlocos[bloco]);                          // Guarda numa lista de tamanhos, o tamanho daquele bloco
+    fscanf(fp,"@%d@", &n);                          // Guarda numa lista de tamanhos, o tamanho daquele bloco
+
+    tamBlocos[bloco] = n;
 
     for (i=0 ; i<256; i++){
         
