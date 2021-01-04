@@ -215,9 +215,3 @@ int moduloC(char *path){
 
 	return time;
 }
-
-
-int main(int argc,char *argv[]){
-	moduloC(argv[1]);
-	return 1;
-}

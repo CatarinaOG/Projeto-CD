@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
                 char *str = argv[index]; 
                 if(!strcmp("d",str)) moduloD(argc,argv);
                 else if(!strcmp("t",str)) moduloT(argv[1]);
-                else if(!strcmp("c",str)) moduloC(argc,argv);
+                else if(!strcmp("c",str)) moduloC(argv[1]);
                 else if(!strcmp("f",str)) moduloF(argc,argv); 
             }
         }
