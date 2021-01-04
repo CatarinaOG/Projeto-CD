@@ -8,7 +8,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define CHECK(x) if(!(x)) {return -1;printf("");}
+#define CHECK(x) if(!(x)) {return -1;printf("ERRO!Verifique o ficheiro dado!");}
 #define CBUFFER(x,buffer,fp) if (x == BREAD){fread(buffer,sizeof(unsigned char),BREAD,fp);c = 0;}  
 #define BREAD (1024*2)
 
@@ -25,7 +25,7 @@ typedef struct{
 //Cria o array dinâmico
 #define CREATE_DARR(x) CHECK(x = malloc(sizeof(darr)));x->tam = 1024;CHECK(x->arr = malloc(sizeof(unsigned char)*1024));
 //Realoca a memoria no array dinâmico 
-#define REALLOC_DARR(x,c,a) if(!(c+a < x->tam)){x->tam *= 2;CHECK(realloc(x->arr,sizeof(unsigned char)*x->tam));printf("Realloc\n");}
+#define REALLOC_DARR(x,c,a) if(!(c+a < x->tam)){x->tam *= 2;CHECK(realloc(x->arr,sizeof(unsigned char)*x->tam));}
 //Dá free a memoria do array dinâmico 
 #define DEL_DARR(x) free(x->arr);free(x);
 

@@ -16,6 +16,13 @@ int main(int argc, char *argv[]) {
                 else if(!strcmp("f",str)) moduloF(argc,argv); 
             }
         }
+        else if(!strcmp(argv[1],"--help")){
+            printf("Modulo F: -m f | opções : -b k(640kb) m(8mb) M(64mb) default 64k (tamanho dos blocos)\n");
+            printf("                          -c r (força compressão rle)\n");
+            printf("Modulo T: -m t\n");
+            printf("Modulo C: -m c\n");
+            printf("Modulo D: -m d | opções : -d s(apenas descompreção SF) r(apenas descompreção RLE)\n");
+        }
     }
     else printf("Comando inválido! Utilize o comando \"shafa --help\" para mais informação.\n");
     return 0;
