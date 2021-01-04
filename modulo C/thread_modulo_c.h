@@ -8,7 +8,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define CHECK(x) if(!(x)) {return -1;printf("ERRO!Verifique o ficheiro dado!");}
+#define CHECK(x) if(!(x)) {printf("ERRO!Verifique o ficheiro dado!\n");return -1;}
 #define CBUFFER(x,buffer,fp) if (x == BREAD){fread(buffer,sizeof(unsigned char),BREAD,fp);c = 0;}  
 #define BREAD (1024*2)
 
