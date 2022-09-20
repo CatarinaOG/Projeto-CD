@@ -1,5 +1,8 @@
 # Projeto De Comunicação de Dados
 
+## Descrição
+Este projeto foi desenvolvido no âmbito da unidade curricular de Comunicação de Dados, cujo desafio era criar, perante um ficheiro qualquer de entrada, um outro ficheiro que correspondesse ao original mas comprimido, através do método Shannon-Fano
+
 ## Autores
 Módulo 1:<br />
 a88276 Diogo Viana Ramos Casal Novo<br />
@@ -17,5 +20,4 @@ Módulo 4:<br />
 a93288 Gabriela Moreira Prata<br />
 a93315 Alexandre Silva Martins<br />
 
-## Descrição
-Este projeto foi desenvolvido no âmbito da unidade curricular de Comunicação de Dados, cujo desafio era criar, perante um ficheiro qualquer de entrada, um outro ficheiro que correspondesse ao original mas comprimido, através do método Shannon-Fano
+
